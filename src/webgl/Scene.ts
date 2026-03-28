@@ -3,6 +3,7 @@ import type { AudioFeatures } from '../audio/AudioEngine';
 import type { VJState } from './StateManager';
 import { AnchorLayer } from './layers/AnchorLayer';
 import { Director } from './layers/Director';
+import { EnvironmentLayers } from './layers/EnvironmentLayers';
 import { LightingLayer } from './layers/LightingLayer';
 import { PostProcessing } from './layers/PostProcessing';
 
@@ -25,6 +26,7 @@ export class VJScene {
   private postProcessing: PostProcessing | null = null;
   private director: Director | null = null;
 
+  private readonly environmentLayers = new EnvironmentLayers();
   private readonly anchorLayer = new AnchorLayer();
   private readonly lightingLayer = new LightingLayer();
 
@@ -40,6 +42,7 @@ export class VJScene {
     const target = new THREE.Vector3(0, 0, 0);
     this.director = new Director(this.camera, target);
 
+    this.environmentLayers.init(this.threeScene);
     this.anchorLayer.init(this.threeScene);
     this.lightingLayer.init(this.threeScene);
 
@@ -68,6 +71,7 @@ export class VJScene {
 
     const features = _features; // keep the original param name stable in callsites.
     this.director?.update(dtSeconds, features, state);
+    this.environmentLayers.update(dtSeconds, features, state);
     this.anchorLayer.update(dtSeconds, features, state);
     this.lightingLayer.update(dtSeconds, features, state);
     this.postProcessing?.update(dtSeconds, features, state);
