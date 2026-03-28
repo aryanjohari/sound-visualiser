@@ -9,17 +9,22 @@ import anchorFrag from '../../shaders/anchor.frag.glsl?raw';
 function makeTorusKnotParticles(tubularSegments = 256, radialSegments = 88) {
   const knot = new THREE.TorusKnotGeometry(1.15, 0.36, tubularSegments, radialSegments);
   const src = knot.attributes.position;
+  const nrm = knot.attributes.normal;
   const count = src.count;
   const positions = new Float32Array(count * 3);
+  const normals = new Float32Array(count * 3);
   for (let i = 0; i < count; i += 1) {
     positions[i * 3] = src.getX(i);
     positions[i * 3 + 1] = src.getY(i);
     positions[i * 3 + 2] = src.getZ(i);
+    normals[i * 3] = nrm.getX(i);
+    normals[i * 3 + 1] = nrm.getY(i);
+    normals[i * 3 + 2] = nrm.getZ(i);
   }
   const seeds = new Float32Array(count);
   for (let i = 0; i < count; i += 1) seeds[i] = Math.random();
   knot.dispose();
-  return { positions, seeds, count };
+  return { positions, normals, seeds, count };
 }
 
 export class AnchorLayer {
@@ -32,9 +37,10 @@ export class AnchorLayer {
   private rmsPeak = 1e-6;
 
   init(threeScene: THREE.Scene) {
-    const { positions, seeds } = makeTorusKnotParticles();
+    const { positions, normals, seeds } = makeTorusKnotParticles();
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
     geometry.setAttribute('a_seed', new THREE.BufferAttribute(seeds, 1));
     geometry.computeBoundingSphere();
 
@@ -47,10 +53,12 @@ export class AnchorLayer {
         u_mid: { value: 0 },
         u_high: { value: 0 },
         u_lightningFlash: { value: 0 },
+        u_thresholdedHigh: { value: 0 },
       },
       transparent: true,
+      opacity: 0.6,
       depthWrite: false,
-      blending: THREE.NormalBlending,
+      blending: THREE.AdditiveBlending,
     });
 
     this.points = new THREE.Points(geometry, this.material);
@@ -79,6 +87,7 @@ export class AnchorLayer {
     this.material.uniforms.u_mid.value = Math.min(1.4, midN);
     this.material.uniforms.u_high.value = Math.min(1.5, highN);
     this.material.uniforms.u_lightningFlash.value = state.lightningFlash;
+    this.material.uniforms.u_thresholdedHigh.value = Math.min(1, state.thresholdedHigh);
     // Pump entire knot; keep a floor so it never collapses to a point.
     this.material.uniforms.u_bass.value = 0.88 + 0.34 * Math.min(1.35, bassN);
 

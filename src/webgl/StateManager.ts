@@ -8,8 +8,8 @@ export type VJState = {
   /** Instantaneous 0–1 thresholded high (same as fluid lightning `u_high`). */
   thresholdedHigh: number;
   /**
-   * Exponential lerp toward `thresholdedHigh` — drives center PointLight + particle flash
-   * so hi-hat spikes hit hard then decay quickly.
+   * Exponential lerp toward `thresholdedHigh` — drives particle flash decay
+   * (center PointLight uses instantaneous `thresholdedHigh`).
    */
   lightningFlash: number;
 };

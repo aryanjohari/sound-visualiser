@@ -120,9 +120,14 @@ void main() {
   vec2 c2 = cellularVoronoiWarp(uv * (14.0 + bass * 9.0) * 1.73 + vec2(-t * 0.05, t * 0.04));
   vec2 cellVec = c1 * 1.15 + c2 * 0.55;
   float cellMag = length(cellVec);
+  // Soften Voronoi-driven UV shear (melts sharp geometric seams in the warp).
+  vec2 cellDir = normalize(cellVec + vec2(1e-4));
+  float cellMagSoft = smoothstep(0.0, 0.72, cellMag);
+  vec2 cellVecSoft = cellDir * cellMagSoft;
 
   float kickWarp = bass * (0.38 + 0.62 * smoothstep(0.08, 0.95, bass));
-  vec2 uvWarp = uv + cellVec * kickWarp * 0.22 + normalize(cellVec + vec2(1e-4)) * cellMag * kickWarp * 0.08;
+  vec2 uvWarp =
+    uv + cellVecSoft * kickWarp * 0.22 + cellDir * cellMagSoft * kickWarp * 0.08;
 
   float cellBorder = cellularEdgeMask(uv * (9.0 + bass * 5.0) + vec2(t * 0.06, -t * 0.05));
 
@@ -133,7 +138,14 @@ void main() {
     fbm3(pFluid + vec3(5.0, 23.0, 0.0))
   );
 
-  vec3 warp = (flow - 0.5) * 2.0;
+  // Distortion field: smoothstep eases harsh bands / pixel-tear into liquid glass bends.
+  vec3 warpRaw = (flow - 0.5) * 2.0;
+  vec3 warp = vec3(
+    -1.0 + 2.0 * smoothstep(-0.85, 0.85, warpRaw.x * 0.5 + 0.5),
+    -1.0 + 2.0 * smoothstep(-0.85, 0.85, warpRaw.y * 0.5 + 0.5),
+    -1.0 + 2.0 * smoothstep(-0.85, 0.85, warpRaw.z * 0.5 + 0.5)
+  );
+
   float f0 = fbm3(vec3(uvWarp * 2.4, 0.0) + warp * 0.55 + t * vec3(0.11, 0.09, 0.13));
   float f1 = fbm3(vec3(uvWarp.yx * 2.1, 0.4) - warp * 0.45 + t * vec3(-0.08, 0.12, 0.07));
   float f2 = fbm3(vec3(uvWarp * 1.7 + vec2(0.6, -0.3), 0.8) + t * 0.05);

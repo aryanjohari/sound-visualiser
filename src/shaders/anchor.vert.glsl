@@ -7,6 +7,8 @@ uniform float u_mid;
 attribute float a_seed;
 
 varying float v_noise;
+varying vec3 vWorldPos;
+varying vec3 vWorldNormal;
 
 // 3D simplex noise (Stefan Gustavson-style)
 vec3 mod289(vec3 x) {
@@ -147,6 +149,10 @@ void main() {
 
   float n = snoise(base * 1.25 + vec3(a_seed, t * 0.16, -t * 0.12));
   n += 0.5 * snoise(base * 2.1 + vec3(0.0, t * 0.28 + a_seed, 0.0));
+
+  vec4 worldPos4 = modelMatrix * vec4(p, 1.0);
+  vWorldPos = worldPos4.xyz;
+  vWorldNormal = normalize(mat3(modelMatrix) * normal);
 
   vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mvPosition;

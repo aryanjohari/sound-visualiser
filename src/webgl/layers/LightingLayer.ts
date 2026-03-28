@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
 import type { VJState } from '../StateManager';
 
-/** Max intensity for the center white flash (0–1 `lightningFlash` → Three.js units). */
+/** Max intensity for center white point (0–1 `thresholdedHigh`, same driver as fluid `u_high`). */
 const CENTER_FLASH_INTENSITY_MAX = 22;
 
 export class LightingLayer {
   private dir: THREE.DirectionalLight;
   private p1: THREE.PointLight;
   private p2: THREE.PointLight;
-  /** White point at world origin: hi-hat / thresholded high physically lifts the particle knot. */
+  /** White point at world origin: synced to thresholded high (background lightning). */
   private centerFlash: THREE.PointLight;
 
   private fluxPeak = 1e-6;
@@ -50,7 +50,7 @@ export class LightingLayer {
     this.p2.intensity = 0.08 + 0.95 * fluxBoost;
     this.p2.color.setHSL(0.48 + 0.1 * fluxN, 0.95, 0.55);
 
-    this.centerFlash.intensity = state.lightningFlash * CENTER_FLASH_INTENSITY_MAX;
+    this.centerFlash.intensity = Math.min(1, state.thresholdedHigh) * CENTER_FLASH_INTENSITY_MAX;
   }
 }
 
