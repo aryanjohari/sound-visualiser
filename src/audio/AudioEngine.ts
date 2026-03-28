@@ -14,6 +14,8 @@ export type AudioEngineOptions = {
   bufferSize?: number;
   hopSize?: number;
   onFeatures?: (features: AudioFeatures) => void;
+  /** Fires when mic/file playback becomes active or after file/mic fully stops (including natural track end). */
+  onPlaybackStateChange?: (playing: boolean) => void;
 };
 
 type AudioSourceMode = 'mic' | 'file';
@@ -50,6 +52,8 @@ export class AudioEngine {
   private sourceNode: MediaStreamAudioSourceNode | MediaElementAudioSourceNode | null = null;
   private stream: MediaStream | null = null;
   private element: HTMLAudioElement | null = null;
+  private objectUrlToRevoke: string | null = null;
+  private onElementEnded: (() => void) | null = null;
 
   private analyzer: MeydaAnalyzer | null = null;
   private prevPowerSpectrum: Float32Array | null = null;
@@ -57,6 +61,7 @@ export class AudioEngine {
   private readonly bufferSize: number;
   private readonly hopSize: number;
   private readonly onFeatures?: (features: AudioFeatures) => void;
+  private readonly onPlaybackStateChange?: (playing: boolean) => void;
 
   private latest: AudioFeatures = { ...DEFAULT_FEATURES };
 
@@ -64,6 +69,11 @@ export class AudioEngine {
     this.bufferSize = options.bufferSize ?? 512;
     this.hopSize = options.hopSize ?? 256;
     this.onFeatures = options.onFeatures;
+    this.onPlaybackStateChange = options.onPlaybackStateChange;
+  }
+
+  private notifyPlayback(playing: boolean) {
+    this.onPlaybackStateChange?.(playing);
   }
 
   getFeatures() {
@@ -71,7 +81,8 @@ export class AudioEngine {
   }
 
   async startMicrophone() {
-    this.stop();
+    await this.teardown();
+
     this.mode = 'mic';
 
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -83,33 +94,68 @@ export class AudioEngine {
     this.sourceNode = this.audioContext.createMediaStreamSource(this.stream);
 
     this.createAnalyzerAndStart(this.sourceNode);
+    this.notifyPlayback(true);
   }
 
+  /** Play remote or public URL (e.g. `/track.mp3`). Does not revoke the URL on stop. */
+  async startUrl(url: string) {
+    await this.startFromMediaUrl(url, false);
+  }
+
+  /** Play a local file via `URL.createObjectURL`; revokes the blob URL on stop. */
   async startFile(file: File) {
-    this.stop();
+    const objectUrl = URL.createObjectURL(file);
+    await this.startFromMediaUrl(objectUrl, true);
+  }
+
+  private async startFromMediaUrl(url: string, revokeObjectUrlOnStop: boolean) {
+    await this.teardown();
+
     this.mode = 'file';
+    this.objectUrlToRevoke = revokeObjectUrlOnStop ? url : null;
 
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     this.audioContext = new AudioCtx();
     await this.audioContext.resume();
 
-    const url = URL.createObjectURL(file);
     const element = new Audio(url);
     element.crossOrigin = 'anonymous';
     element.loop = false;
 
-    // Create a source node for Meyda, but also connect to destination so the track can be heard.
     this.element = element;
     this.sourceNode = this.audioContext.createMediaElementSource(element);
     this.sourceNode.connect(this.audioContext.destination);
 
     this.createAnalyzerAndStart(this.sourceNode);
 
-    await element.play();
+    const onEnded = () => {
+      void this.stop();
+    };
+    this.onElementEnded = onEnded;
+    element.addEventListener('ended', onEnded);
+
+    try {
+      await element.play();
+      this.notifyPlayback(true);
+    } catch (err) {
+      await this.teardown();
+      // Do not notifyPlayback(false): UI was never recessed; avoids clobbering error status in the host.
+      throw err;
+    }
   }
 
   async stop() {
+    await this.teardown();
+    this.notifyPlayback(false);
+  }
+
+  private async teardown() {
     this.mode = null;
+
+    if (this.element && this.onElementEnded) {
+      this.element.removeEventListener('ended', this.onElementEnded);
+    }
+    this.onElementEnded = null;
 
     try {
       this.analyzer?.stop();
@@ -127,12 +173,15 @@ export class AudioEngine {
 
     if (this.element) {
       this.element.pause();
-      // Best-effort release
       this.element.src = '';
     }
     this.element = null;
 
-    // Keep the AudioContext around only if it already exists; it can be resumed on next start.
+    if (this.objectUrlToRevoke) {
+      URL.revokeObjectURL(this.objectUrlToRevoke);
+      this.objectUrlToRevoke = null;
+    }
+
     if (this.audioContext) {
       try {
         await this.audioContext.suspend();

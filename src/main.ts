@@ -7,9 +7,12 @@ import { VJScene } from './webgl/Scene';
 
 const canvas = document.getElementById('webgl') as HTMLCanvasElement | null;
 const ui = document.getElementById('ui') as HTMLDivElement | null;
+const hoverStopHost = document.getElementById('hoverStopHost') as HTMLDivElement | null;
+const hoverStopBtn = document.getElementById('hoverStopBtn') as HTMLButtonElement | null;
 
 if (!canvas) throw new Error('Missing canvas #webgl');
 if (!ui) throw new Error('Missing #ui container');
+if (!hoverStopHost || !hoverStopBtn) throw new Error('Missing hover stop controls');
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -21,7 +24,15 @@ renderer.setClearColor(0x000000, 1);
 
 const scene = new VJScene(renderer);
 
-const audioEngine = new AudioEngine();
+const audioEngine = new AudioEngine({
+  onPlaybackStateChange(playing) {
+    ui.classList.toggle('glass-shell--recessed', playing);
+    hoverStopHost.classList.toggle('hover-stop-host--active', playing);
+    hoverStopHost.setAttribute('aria-hidden', playing ? 'false' : 'true');
+    if (!playing) setStatusIdle();
+  },
+});
+
 const stateManager = new StateManager();
 
 const loop = new Loop({
@@ -43,97 +54,108 @@ loop.start();
 
 window.addEventListener('resize', resize);
 
-// --- Simple source toggle UI ---
-let selectedFile: File | null = null;
+function setStatus(text: string) {
+  document.getElementById('status')!.textContent = text;
+}
+
+function setStatusIdle() {
+  setStatus('Choose a demo track, microphone, or a local file.');
+}
 
 ui.innerHTML = `
-  <div class="uiRow">
-    <label>
-      <input type="checkbox" id="modeMic" checked />
-      Microphone
-    </label>
-    <label style="display:flex;align-items:center;gap:8px;">
-      <input type="checkbox" id="modeFile" />
-      Audio file
-    </label>
-  </div>
-  <div class="uiRow" style="margin-bottom:0;">
-    <input id="fileInput" type="file" accept="audio/*" style="display:none;" />
-  </div>
-  <div class="uiRow">
-    <button id="startBtn">Start</button>
-    <button id="stopBtn">Stop</button>
-  </div>
-  <div class="uiRow" style="margin-bottom:0;">
-    <div id="status" style="opacity:0.9;">Idle</div>
+  <div class="glass-panel">
+    <h1 class="glass-title">Sound Visualiser</h1>
+    <section class="glass-section" aria-labelledby="demo-heading">
+      <h2 id="demo-heading">Demo Tracks</h2>
+      <div class="glass-row">
+        <button type="button" id="demoFreeTibet">Free Tibet</button>
+        <button type="button" id="demoHuzur">Huzur</button>
+      </div>
+    </section>
+    <section class="glass-section" aria-labelledby="upload-heading">
+      <h2 id="upload-heading">Upload Local</h2>
+      <input id="localFile" type="file" accept="audio/*" />
+    </section>
+    <section class="glass-section" aria-labelledby="mic-heading">
+      <h2 id="mic-heading">Microphone</h2>
+      <div class="glass-row">
+        <button type="button" id="micBtn">Use microphone</button>
+      </div>
+    </section>
+    <div class="glass-footer">
+      <button type="button" id="stopBtn">Stop</button>
+      <div id="status">Choose a demo track, microphone, or a local file.</div>
+    </div>
   </div>
 `;
 
-const modeMic = document.getElementById('modeMic') as HTMLInputElement;
-const modeFile = document.getElementById('modeFile') as HTMLInputElement;
-const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-const startBtn = document.getElementById('startBtn') as HTMLButtonElement;
+const demoFreeTibet = document.getElementById('demoFreeTibet') as HTMLButtonElement;
+const demoHuzur = document.getElementById('demoHuzur') as HTMLButtonElement;
+const localFile = document.getElementById('localFile') as HTMLInputElement;
 const stopBtn = document.getElementById('stopBtn') as HTMLButtonElement;
-const status = document.getElementById('status') as HTMLDivElement;
+const micBtn = document.getElementById('micBtn') as HTMLButtonElement;
 
-function setStatus(text: string) {
-  status.textContent = text;
-}
-
-function syncModeUI() {
-  if (modeMic.checked) {
-    fileInput.style.display = 'none';
-    modeFile.checked = false;
-  } else {
-    fileInput.style.display = 'block';
-    modeFile.checked = true;
-  }
-}
-
-modeMic.addEventListener('change', () => {
-  if (modeMic.checked) syncModeUI();
-});
-
-modeFile.addEventListener('change', () => {
-  if (modeFile.checked) {
-    modeMic.checked = false;
-    syncModeUI();
-  }
-});
-
-fileInput.addEventListener('change', () => {
-  selectedFile = fileInput.files?.[0] ?? null;
-});
-
-startBtn.addEventListener('click', async () => {
+async function playDemo(path: string, label: string) {
   try {
-    if (modeMic.checked) {
-      setStatus('Starting microphone...');
-      await audioEngine.startMicrophone();
-      setStatus('Mic running');
-    } else {
-      if (!selectedFile) {
-        setStatus('Select an audio file first');
-        return;
-      }
-      setStatus('Loading audio file...');
-      await audioEngine.startFile(selectedFile);
-      setStatus('File playing');
-    }
+    setStatus(`Loading ${label}…`);
+    await audioEngine.startUrl(path);
+    setStatus(`Playing ${label}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     setStatus(`Error: ${msg}`);
   }
+}
+
+demoFreeTibet.addEventListener('click', () => {
+  void playDemo('/freetibet.mp3', 'Free Tibet');
 });
 
-stopBtn.addEventListener('click', async () => {
-  await audioEngine.stop();
-  setStatus('Stopped');
+demoHuzur.addEventListener('click', () => {
+  void playDemo('/huzur.mp3', 'Huzur');
 });
 
-syncModeUI();
+localFile.addEventListener('change', () => {
+  const file = localFile.files?.[0];
+  if (!file) return;
+  void (async () => {
+    try {
+      setStatus(`Loading ${file.name}…`);
+      await audioEngine.startFile(file);
+      setStatus(`Playing ${file.name}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(`Error: ${msg}`);
+    }
+  })();
+  localFile.value = '';
+});
 
-// Debug hook (optional): log occasionally so we can see extraction working.
+micBtn.addEventListener('click', () => {
+  void (async () => {
+    try {
+      setStatus('Starting microphone…');
+      await audioEngine.startMicrophone();
+      setStatus('Microphone live');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(`Error: ${msg}`);
+    }
+  })();
+});
+
+stopBtn.addEventListener('click', () => {
+  void audioEngine.stop();
+});
+
+hoverStopBtn.addEventListener('click', () => {
+  void audioEngine.stop();
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') void audioEngine.stop();
+});
+
+// Debug: log extraction occasionally (optional).
 let debugT = 0;
 function debugTick(dt: number) {
   debugT += dt;
@@ -151,6 +173,4 @@ function debugTick(dt: number) {
   }
 }
 
-// Attach debug to the render loop via an interval (safe without changing Loop.ts).
 setInterval(() => debugTick(0.5), 500);
-

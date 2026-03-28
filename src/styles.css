@@ -15,38 +15,210 @@ body {
   display: block;
 }
 
-#ui {
+/* —— Glass overlay shell (full-viewport layer over canvas + toggles fade) —— */
+.glass-shell {
   position: fixed;
-  left: 16px;
-  top: 16px;
+  inset: 0;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  pointer-events: auto;
   color: rgba(255, 255, 255, 0.92);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
-    Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
-  font-size: 13px;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+  font-size: 14px;
+  line-height: 1.45;
+
+  transition:
+    opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.uiRow {
+.glass-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(4, 4, 10, 0.42);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  pointer-events: auto;
+}
+
+/* Recessed: clicks must reach the canvas — disable hit-testing on shell and every descendant */
+.glass-shell.glass-shell--recessed {
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+.glass-shell.glass-shell--recessed::before,
+.glass-shell.glass-shell--recessed * {
+  pointer-events: none;
+}
+
+/* —— Hidden top-right stop (only hit-testable while audio is playing; see .hover-stop-host--active) —— */
+.hover-stop-host {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 50px;
+  height: 50px;
+  z-index: 20;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.hover-stop-host.hover-stop-host--active {
+  pointer-events: auto;
+}
+
+.hover-stop-btn {
+  margin: 0;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0s;
+}
+
+.hover-stop-host:hover .hover-stop-btn {
+  opacity: 1;
+}
+
+.hover-stop-btn:hover {
+  color: #fff;
+}
+
+.hover-stop-btn:focus-visible {
+  opacity: 1;
+  outline: 2px solid rgba(120, 160, 255, 0.65);
+  outline-offset: 2px;
+}
+
+.glass-panel {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  width: 100%;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 22px 24px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 12, 18, 0.45);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.glass-title {
+  margin: 0 0 18px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.glass-section {
+  margin-bottom: 18px;
+}
+
+.glass-section:last-of-type {
+  margin-bottom: 14px;
+}
+
+.glass-section h2 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.glass-row {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  margin-bottom: 8px;
 }
 
-button,
-label {
-  cursor: pointer;
+.glass-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 4px;
 }
 
 button {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.92);
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:focus-visible {
+  outline: 2px solid rgba(120, 160, 255, 0.55);
+  outline-offset: 2px;
 }
 
 input[type='file'] {
-  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  max-width: 100%;
 }
 
+input[type='file']::file-selector-button {
+  cursor: pointer;
+  font: inherit;
+  margin-right: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#status {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  opacity: 0.72;
+}
