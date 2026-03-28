@@ -5,7 +5,6 @@ import { AnchorLayer } from './layers/AnchorLayer';
 import { Director } from './layers/Director';
 import { LightingLayer } from './layers/LightingLayer';
 import { PostProcessing } from './layers/PostProcessing';
-import { VoidLayer } from './layers/VoidLayer';
 
 export type SceneInitParams = {
   width: number;
@@ -26,7 +25,6 @@ export class VJScene {
   private postProcessing: PostProcessing | null = null;
   private director: Director | null = null;
 
-  private readonly voidLayer = new VoidLayer();
   private readonly anchorLayer = new AnchorLayer();
   private readonly lightingLayer = new LightingLayer();
 
@@ -34,6 +32,7 @@ export class VJScene {
 
   init(params: SceneInitParams) {
     this.threeScene.add(this.root);
+    this.threeScene.background = new THREE.Color(0x000000);
 
     this.camera.position.set(0, 0, 6);
     this.resize(params.width, params.height);
@@ -41,11 +40,10 @@ export class VJScene {
     const target = new THREE.Vector3(0, 0, 0);
     this.director = new Director(this.camera, target);
 
-    this.voidLayer.init(this.threeScene);
     this.anchorLayer.init(this.threeScene);
     this.lightingLayer.init(this.threeScene);
 
-    this.postProcessing = new PostProcessing(this.renderer, this.threeScene, this.camera, this.director, params.width, params.height);
+    this.postProcessing = new PostProcessing(this.renderer, this.threeScene, this.camera, params.width, params.height);
 
     this.initialised = true;
   }
@@ -54,6 +52,11 @@ export class VJScene {
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
     this.postProcessing?.resize(width, height);
+  }
+
+  /** Quick dolly toward the look target on strong spectral-flux peaks (beat drops). */
+  triggerCameraZDollyPunch() {
+    this.director?.triggerZDollyPunch();
   }
 
   update(dtSeconds: number, _features: AudioFeatures, state: VJState) {
@@ -65,7 +68,6 @@ export class VJScene {
 
     const features = _features; // keep the original param name stable in callsites.
     this.director?.update(dtSeconds, features, state);
-    this.voidLayer.update(dtSeconds, features, state);
     this.anchorLayer.update(dtSeconds, features, state);
     this.lightingLayer.update(dtSeconds, features, state);
     this.postProcessing?.update(dtSeconds, features, state);

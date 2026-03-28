@@ -23,6 +23,9 @@ export class Director {
   private fluxPeak = 1e-6;
   private lastKickT = 0;
 
+  /** 0 = no extra dolly; 1 = full punch along view axis toward target. */
+  private zDollyPunch = 0;
+
   constructor(private readonly camera: THREE.PerspectiveCamera, private readonly target: THREE.Vector3) {
     this.camera.fov = this.baseFovCinematic;
     this.camera.updateProjectionMatrix();
@@ -34,6 +37,15 @@ export class Director {
 
   getBokehAperture() {
     return this.aperture;
+  }
+
+  triggerZDollyPunch() {
+    gsap.killTweensOf(this, 'zDollyPunch');
+    this.zDollyPunch = 0;
+    gsap
+      .timeline()
+      .to(this, { zDollyPunch: 1, duration: 0.055, ease: 'power2.out' })
+      .to(this, { zDollyPunch: 0, duration: 0.2, ease: 'power3.inOut' });
   }
 
   update(dtSeconds: number, features: AudioFeatures, state: VJState) {
@@ -62,6 +74,13 @@ export class Director {
     const y = Math.sin(this.orbit.angle * 0.67) * this.orbit.height;
 
     const basePos = new THREE.Vector3(x, y, z);
+
+    const toward = new THREE.Vector3().subVectors(this.target, basePos);
+    const dist = toward.length();
+    if (dist > 1e-5 && this.zDollyPunch > 1e-5) {
+      toward.normalize().multiplyScalar(0.52 * this.zDollyPunch);
+      basePos.add(toward);
+    }
 
     // Shake
     const decay = this.mode === 'rave' ? 4.5 : 2.2;

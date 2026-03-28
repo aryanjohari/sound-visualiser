@@ -1,9 +1,8 @@
 precision highp float;
 
 uniform float u_time;
-uniform float u_bass; // drives outward push
-uniform float u_high; // used as extra energy for turbulence
-uniform float u_pointSize;
+uniform float u_bass;
+uniform float u_mid;
 
 attribute float a_seed;
 
@@ -89,27 +88,70 @@ float snoise(vec3 v) {
          dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
 }
 
+vec3 noiseField(vec3 p, float t) {
+  return vec3(
+    snoise(p + vec3(31.4, 7.9, t * 0.17)),
+    snoise(p.yzx + vec3(-12.1, 19.7, t * 0.13)),
+    snoise(p.zxy + vec3(4.6, -27.3, t * 0.19))
+  );
+}
+
+vec3 curlNoise(vec3 p, float t) {
+  float e = 0.08;
+
+  vec3 px0 = noiseField(p - vec3(e, 0.0, 0.0), t);
+  vec3 px1 = noiseField(p + vec3(e, 0.0, 0.0), t);
+  vec3 py0 = noiseField(p - vec3(0.0, e, 0.0), t);
+  vec3 py1 = noiseField(p + vec3(0.0, e, 0.0), t);
+  vec3 pz0 = noiseField(p - vec3(0.0, 0.0, e), t);
+  vec3 pz1 = noiseField(p + vec3(0.0, 0.0, e), t);
+
+  float dFz_dy = (py1.z - py0.z) / (2.0 * e);
+  float dFy_dz = (pz1.y - pz0.y) / (2.0 * e);
+  float dFx_dz = (pz1.x - pz0.x) / (2.0 * e);
+  float dFz_dx = (px1.z - px0.z) / (2.0 * e);
+  float dFy_dx = (px1.y - px0.y) / (2.0 * e);
+  float dFx_dy = (py1.x - py0.x) / (2.0 * e);
+
+  return vec3(
+    dFz_dy - dFy_dz,
+    dFx_dz - dFz_dx,
+    dFy_dx - dFx_dy
+  );
+}
+
 void main() {
-  vec3 p = position;
-
   float t = u_time;
-  float n = snoise(p * 1.35 + vec3(a_seed, t * 0.18, -t * 0.11));
-  n += 0.4 * snoise(p * 2.2 + vec3(0.0, t * 0.33 + a_seed, 0.0));
+  float bass = max(u_bass, 0.001);
+  vec3 base = position * bass;
 
-  // Outward push, scaled by bass energy.
-  vec3 dir = normalize(p + 1e-4);
-  float push = n * u_bass * 0.95;
-  p += dir * push;
+  float mid = clamp(u_mid, 0.0, 1.4);
+  float midAmt = smoothstep(0.001, 1.0, mid);
 
-  // High-frequency energy increases fluidity slightly.
-  p += dir * (0.12 * u_high) * (0.5 + 0.5 * n);
+  vec3 seedOffset = vec3(a_seed * 9.13, a_seed * 5.37, a_seed * 7.91);
+  vec3 domain = base * 0.62 + seedOffset;
+  float flowTime = t * 0.14;
+
+  vec3 warp = vec3(
+    snoise(domain * 0.85 + vec3(flowTime * 0.21, -flowTime * 0.17, flowTime * 0.13)),
+    snoise(domain.yzx * 0.78 + vec3(-flowTime * 0.15, flowTime * 0.19, flowTime * 0.11)),
+    snoise(domain.zxy * 0.91 + vec3(flowTime * 0.12, flowTime * 0.16, -flowTime * 0.2))
+  );
+
+  vec3 flowA = curlNoise(domain + warp * 0.55, flowTime);
+  vec3 flowB = curlNoise(domain * 1.35 + warp * 0.35 + vec3(11.7, -8.4, 6.2), flowTime * 1.32);
+  vec3 curl = normalize(flowA + 0.7 * flowB + 1e-4);
+
+  float curlMag = 0.22;
+  vec3 p = base + curl * curlMag * midAmt;
+
+  float n = snoise(base * 1.25 + vec3(a_seed, t * 0.16, -t * 0.12));
+  n += 0.5 * snoise(base * 2.1 + vec3(0.0, t * 0.28 + a_seed, 0.0));
 
   vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mvPosition;
 
-  // Points: scale by depth so it feels anchored in 3D space.
-  float size = u_pointSize * (1.0 + 1.25 * u_bass) * (0.85 + 0.45 * n);
-  gl_PointSize = size / -mvPosition.z;
+  gl_PointSize = 1.7;
 
   v_noise = n;
 }

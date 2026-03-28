@@ -2,6 +2,8 @@ precision highp float;
 
 uniform float u_time;
 uniform float u_energy;
+uniform float u_bass;
+uniform float u_flux;
 
 varying vec3 vWorldPos;
 
@@ -103,7 +105,9 @@ void main() {
   vec3 rd = normalize(vWorldPos - ro);
   float tMax = length(vWorldPos - ro);
 
-  float speed = 0.08 + u_energy * 0.45;
+  float bass = clamp(u_bass, 0.0, 1.5);
+  float flux = clamp(u_flux, 0.0, 1.8);
+  float speed = 0.08 + u_energy * 0.35 + bass * 0.8;
   float stepLen = tMax / float(STEPS);
 
   float density = 0.0;
@@ -111,20 +115,44 @@ void main() {
     float t = float(i) * stepLen;
     vec3 pos = ro + rd * t;
 
-    vec3 flow = vec3(0.0, u_time * speed, u_time * speed * 0.75);
+    vec3 flow = vec3(
+      sin(u_time * (0.35 + 0.55 * bass)),
+      u_time * speed,
+      u_time * speed * (0.55 + 0.8 * bass)
+    );
     float n = fbm(pos * 0.35 + flow);
     density += 0.5 + 0.5 * n;
   }
   density /= float(STEPS);
 
-  float fog = smoothstep(0.25, 0.9, density);
+  float fog = smoothstep(0.18, 0.92, density);
 
-  vec3 cold = vec3(0.02, 0.0, 0.06);
-  vec3 hot = vec3(0.22, 0.3, 0.7);
-  vec3 col = mix(cold, hot, fog);
+  // Bass drives a silk-like flowing gradient backdrop.
+  vec2 uv = normalize(rd.xy + vec2(1e-4));
+  float silkA = fbm(vec3(uv * (1.8 + bass * 1.4), u_time * (0.18 + bass * 0.65)));
+  float silkB = fbm(vec3(uv.yx * (2.6 + bass * 1.9), -u_time * (0.11 + bass * 0.45)));
+  float silk = 0.5 + 0.5 * (0.62 * silkA + 0.38 * silkB);
+  silk = smoothstep(0.2, 0.92, silk);
 
-  float alpha = fog * (0.65 + 0.5 * u_energy);
-  col *= 0.8 + 0.9 * u_energy;
+  vec3 deep = vec3(0.01, 0.0, 0.04);
+  vec3 silkCool = vec3(0.08, 0.14, 0.48);
+  vec3 silkHot = vec3(0.62, 0.24, 0.95);
+  vec3 col = mix(deep, silkCool, fog);
+  col = mix(col, silkHot, silk * (0.2 + 0.78 * bass));
+
+  // Spectral flux creates sharp laser trails/light streaks.
+  vec2 streakUV = rd.xy * 8.5;
+  float laneA = abs(fract(streakUV.x + u_time * 8.5) - 0.5);
+  float laneB = abs(fract(streakUV.y - u_time * 7.8) - 0.5);
+  float lane = min(laneA, laneB);
+  float laserMask = smoothstep(0.08, 0.0, lane);
+  float laserNoise = 0.55 + 0.45 * snoise(vec3(streakUV * 0.8, u_time * 12.0));
+  float laser = laserMask * laserNoise * smoothstep(0.22, 1.0, flux);
+  vec3 laserCol = mix(vec3(0.2, 0.85, 1.0), vec3(1.0, 0.48, 0.96), silk);
+  col += laserCol * laser * (0.5 + 1.9 * flux);
+
+  float alpha = fog * (0.52 + 0.35 * u_energy + 0.55 * bass) + laser * 0.22;
+  col *= 0.72 + 0.7 * u_energy + 0.85 * bass;
 
   gl_FragColor = vec4(col, alpha);
 }

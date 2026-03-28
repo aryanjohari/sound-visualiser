@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AudioEngine } from '../audio/AudioEngine';
+import type { AudioFeatures } from '../audio/AudioEngine';
 import type { VJState } from './StateManager';
 import type { VJScene } from './Scene';
 
@@ -7,7 +8,10 @@ export class Loop {
   private raf: number | null = null;
   private running = false;
 
-  private readonly clock = new THREE.Clock();
+  private timer: THREE.Timer | null = null;
+
+  private spectralFluxPeak = 1e-6;
+  private lastSpectralPunchT = -Infinity;
 
   constructor(
     private readonly params: {
@@ -20,7 +24,8 @@ export class Loop {
   start() {
     if (this.running) return;
     this.running = true;
-    this.clock.start();
+    this.timer?.dispose();
+    this.timer = new THREE.Timer();
     this.tick();
   }
 
@@ -30,11 +35,31 @@ export class Loop {
     this.raf = null;
   }
 
-  private tick = () => {
-    if (!this.running) return;
+  /**
+   * Beat-drop feel: when normalized spectral flux spikes above a high bar,
+   * punch the camera forward (Z dolly along view) via GSAP in Director.
+   */
+  private maybeSpectralFluxCameraPunch(features: AudioFeatures) {
+    const flux = Math.max(0, features.spectralFlux);
+    this.spectralFluxPeak = Math.max(this.spectralFluxPeak * 0.982, flux);
+    const fluxN = flux / (this.spectralFluxPeak + 1e-9);
+    const now = performance.now() * 0.001;
+    const highBar = 0.88;
+    const cooldown = 0.24;
+    if (now - this.lastSpectralPunchT > cooldown && fluxN > highBar) {
+      this.lastSpectralPunchT = now;
+      this.params.scene.triggerCameraZDollyPunch();
+    }
+  }
 
-    const dtSeconds = this.clock.getDelta();
+  private tick = (time?: DOMHighResTimeStamp) => {
+    if (!this.running || !this.timer) return;
+
+    this.timer.update(time);
+    const dtSeconds = this.timer.getDelta();
     const features = this.params.audioEngine.getFeatures();
+    this.maybeSpectralFluxCameraPunch(features);
+
     const state = this.params.stateManager.update(features, dtSeconds);
 
     this.params.scene.update(dtSeconds, features, state);
