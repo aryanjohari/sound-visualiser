@@ -2,10 +2,15 @@ import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
 import type { VJState } from '../StateManager';
 
+/** Max intensity for the center white flash (0–1 `lightningFlash` → Three.js units). */
+const CENTER_FLASH_INTENSITY_MAX = 22;
+
 export class LightingLayer {
   private dir: THREE.DirectionalLight;
   private p1: THREE.PointLight;
   private p2: THREE.PointLight;
+  /** White point at world origin: hi-hat / thresholded high physically lifts the particle knot. */
+  private centerFlash: THREE.PointLight;
 
   private fluxPeak = 1e-6;
 
@@ -18,12 +23,16 @@ export class LightingLayer {
 
     this.p2 = new THREE.PointLight(0x3cffea, 0.6, 100, 2.0);
     this.p2.position.set(-3.2, 2.0, -2.2);
+
+    this.centerFlash = new THREE.PointLight(0xffffff, 0, 100, 2);
+    this.centerFlash.position.set(0, 0, 0);
   }
 
   init(threeScene: THREE.Scene) {
     threeScene.add(this.dir);
     threeScene.add(this.p1);
     threeScene.add(this.p2);
+    threeScene.add(this.centerFlash);
   }
 
   update(_dtSeconds: number, features: AudioFeatures, state: VJState) {
@@ -40,6 +49,8 @@ export class LightingLayer {
 
     this.p2.intensity = 0.08 + 0.95 * fluxBoost;
     this.p2.color.setHSL(0.48 + 0.1 * fluxN, 0.95, 0.55);
+
+    this.centerFlash.intensity = state.lightningFlash * CENTER_FLASH_INTENSITY_MAX;
   }
 }
 
