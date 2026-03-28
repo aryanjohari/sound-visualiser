@@ -5,6 +5,13 @@ export type VJState = {
   cinematic: number; // 1-rave (kept explicit for shader uniforms)
   rmsAvg: number;
   fluxAvg: number;
+  /** Instantaneous 0–1 thresholded high (same as fluid lightning `u_high`). */
+  thresholdedHigh: number;
+  /**
+   * Exponential lerp toward `thresholdedHigh` — drives center PointLight + particle flash
+   * so hi-hat spikes hit hard then decay quickly.
+   */
+  lightningFlash: number;
 };
 
 function clamp01(v: number) {
@@ -27,17 +34,27 @@ export class StateManager {
 
   private rmsPeak = 1e-6;
   private fluxPeak = 1e-6;
+  private highPeak = 1e-6;
 
   private rave = 0; // smoothed
+  private lightningFlashSmooth = 0;
 
   private readonly avgAlpha: number;
   private readonly transitionAlpha: number;
   private readonly peakDecay: number;
+  /** Per-second rate for center flash / point light tracking thresholded high (higher = snappier). */
+  private readonly lightningFlashResponse: number;
 
-  constructor(opts?: { avgAlpha?: number; transitionAlpha?: number; peakDecay?: number }) {
+  constructor(opts?: {
+    avgAlpha?: number;
+    transitionAlpha?: number;
+    peakDecay?: number;
+    lightningFlashResponse?: number;
+  }) {
     this.avgAlpha = opts?.avgAlpha ?? 0.08;
     this.transitionAlpha = opts?.transitionAlpha ?? 0.12;
     this.peakDecay = opts?.peakDecay ?? 0.985;
+    this.lightningFlashResponse = opts?.lightningFlashResponse ?? 38;
   }
 
   update(features: AudioFeatures, dtSeconds: number) {
@@ -60,11 +77,24 @@ export class StateManager {
     const ta = 1 - Math.pow(1 - this.transitionAlpha, Math.max(0.001, dtSeconds * 60));
     this.rave = this.rave * (1 - ta) + raveTarget * ta;
 
+    const high = Math.max(0, features.high);
+    this.highPeak = Math.max(this.highPeak * this.peakDecay, high);
+    const highN = high / (this.highPeak + 1e-9);
+    const thresholdedHigh = Math.min(
+      1.0,
+      Math.min(1.2, highN) * smoothstep(0.4, 0.9, highN),
+    );
+
+    const flashAlpha = 1 - Math.exp(-dtSeconds * this.lightningFlashResponse);
+    this.lightningFlashSmooth += (thresholdedHigh - this.lightningFlashSmooth) * flashAlpha;
+
     return {
       rave: this.rave,
       cinematic: 1 - this.rave,
       rmsAvg: this.rmsAvg,
       fluxAvg: this.fluxAvg,
+      thresholdedHigh,
+      lightningFlash: this.lightningFlashSmooth,
     } satisfies VJState;
   }
 }

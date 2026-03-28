@@ -46,6 +46,7 @@ export class AnchorLayer {
         u_bass: { value: 1 },
         u_mid: { value: 0 },
         u_high: { value: 0 },
+        u_lightningFlash: { value: 0 },
       },
       transparent: true,
       depthWrite: false,
@@ -77,6 +78,7 @@ export class AnchorLayer {
     this.material.uniforms.u_time.value += dtSeconds;
     this.material.uniforms.u_mid.value = Math.min(1.4, midN);
     this.material.uniforms.u_high.value = Math.min(1.5, highN);
+    this.material.uniforms.u_lightningFlash.value = state.lightningFlash;
     // Pump entire knot; keep a floor so it never collapses to a point.
     this.material.uniforms.u_bass.value = 0.88 + 0.34 * Math.min(1.35, bassN);
 
