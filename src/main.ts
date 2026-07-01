@@ -1,9 +1,10 @@
 import './styles.css';
 import * as THREE from 'three';
 import { AudioEngine, type AudioFeatures } from './audio/AudioEngine';
+import { VideoCaptureError } from './camera/VideoCapture';
 import { Loop } from './webgl/Loop';
-import { StateManager } from './webgl/StateManager';
-import { VJScene } from './webgl/Scene';
+import { StateManager, type BeatState, type SyncMode } from './webgl/StateManager';
+import { VJScene, type VisualMode } from './webgl/Scene';
 
 const canvas = document.getElementById('webgl') as HTMLCanvasElement | null;
 const ui = document.getElementById('ui') as HTMLDivElement | null;
@@ -24,8 +25,13 @@ renderer.setClearColor(0x000000, 1);
 
 const scene = new VJScene(renderer);
 
+let audioPlaying = false;
+let lastStatusBase = '';
+let lastBeatState: BeatState | null = null;
+
 const audioEngine = new AudioEngine({
   onPlaybackStateChange(playing) {
+    audioPlaying = playing;
     ui.classList.toggle('glass-shell--recessed', playing);
     hoverStopHost.classList.toggle('hover-stop-host--active', playing);
     hoverStopHost.setAttribute('aria-hidden', playing ? 'false' : 'true');
@@ -59,7 +65,31 @@ function setStatus(text: string) {
 }
 
 function setStatusIdle() {
-  setStatus('Choose a demo track, microphone, or a local file.');
+  lastStatusBase = 'Choose a demo track, microphone, or a local file.';
+  setStatus(lastStatusBase);
+}
+
+function modeLabel(mode: VisualMode) {
+  if (mode === 'cinematic') return 'Cinematic';
+  if (mode === 'live') return 'Live';
+  return 'Acid';
+}
+
+function beatStatusSuffix(beat: BeatState | null, playing: boolean): string {
+  if (!playing && !scene.needsWebcam()) return '';
+  if (!beat) return '';
+  if (beat.syncMode === 'off') return ' · sync off';
+  if (beat.syncActive) return ` · ${Math.round(beat.bpm)} BPM`;
+  if (playing) return ' · no beat';
+  return '';
+}
+
+function updateModeStatus(mood?: string, beat?: BeatState | null) {
+  const mode = scene.getVisualMode();
+  const moodPart = mood ? ` · ${mood}` : '';
+  const beatPart = beatStatusSuffix(beat ?? lastBeatState, audioPlaying);
+  lastStatusBase = `${modeLabel(mode)}${moodPart}${beatPart}`;
+  setStatus(lastStatusBase);
 }
 
 ui.innerHTML = `
@@ -82,6 +112,21 @@ ui.innerHTML = `
         <button type="button" id="micBtn">Use microphone</button>
       </div>
     </section>
+    <section class="glass-section" aria-labelledby="mode-heading">
+      <h2 id="mode-heading">Visual Mode</h2>
+      <div class="glass-row mode-row" role="group" aria-label="Visual mode">
+        <button type="button" id="modeCinematic" class="mode-btn" data-mode="cinematic">Cinematic</button>
+        <button type="button" id="modeLive" class="mode-btn" data-mode="live">Live</button>
+        <button type="button" id="modeAcid" class="mode-btn" data-mode="acid">Acid</button>
+      </div>
+    </section>
+    <section class="glass-section" aria-labelledby="sync-heading">
+      <h2 id="sync-heading">Sync</h2>
+      <div class="glass-row mode-row" role="group" aria-label="Beat sync">
+        <button type="button" id="syncAuto" class="mode-btn" data-sync="auto">Auto</button>
+        <button type="button" id="syncOff" class="mode-btn" data-sync="off">Off</button>
+      </div>
+    </section>
     <div class="glass-footer">
       <button type="button" id="stopBtn">Stop</button>
       <div id="status">Choose a demo track, microphone, or a local file.</div>
@@ -94,6 +139,90 @@ const demoHuzur = document.getElementById('demoHuzur') as HTMLButtonElement;
 const localFile = document.getElementById('localFile') as HTMLInputElement;
 const stopBtn = document.getElementById('stopBtn') as HTMLButtonElement;
 const micBtn = document.getElementById('micBtn') as HTMLButtonElement;
+const modeCinematic = document.getElementById('modeCinematic') as HTMLButtonElement;
+const modeLive = document.getElementById('modeLive') as HTMLButtonElement;
+const modeAcid = document.getElementById('modeAcid') as HTMLButtonElement;
+const modeButtons = [modeCinematic, modeLive, modeAcid];
+const syncAuto = document.getElementById('syncAuto') as HTMLButtonElement;
+const syncOff = document.getElementById('syncOff') as HTMLButtonElement;
+const syncButtons = [syncAuto, syncOff];
+
+function updateSyncButtons() {
+  const current = loop.getSyncMode();
+  for (const btn of syncButtons) {
+    const active = btn.dataset.sync === current;
+    btn.classList.toggle('mode-btn--active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  }
+}
+
+function selectSync(mode: SyncMode) {
+  if (mode === loop.getSyncMode()) return;
+  loop.setSyncMode(mode);
+  updateSyncButtons();
+  updateModeStatus(undefined, lastBeatState);
+}
+
+for (const btn of syncButtons) {
+  btn.addEventListener('click', () => {
+    selectSync(btn.dataset.sync as SyncMode);
+  });
+}
+
+function updateModeButtons() {
+  const current = scene.getVisualMode();
+  for (const btn of modeButtons) {
+    const active = btn.dataset.mode === current;
+    btn.classList.toggle('mode-btn--active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  }
+}
+
+async function selectMode(mode: VisualMode) {
+  if (mode === scene.getVisualMode()) return;
+
+  const needsCamera = mode === 'live' || mode === 'acid';
+  try {
+    if (needsCamera) setStatus('Starting camera…');
+    await scene.setVisualMode(mode);
+    updateModeButtons();
+    updateModeStatus();
+    if (needsCamera && scene.needsWebcam()) {
+      updateModeStatus();
+    } else if (!audioPlaying && mode === 'cinematic') {
+      setStatusIdle();
+    }
+  } catch (err) {
+    updateModeButtons();
+    if (err instanceof VideoCaptureError) {
+      setStatus(err.message);
+    } else {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(`Error: ${msg}`);
+    }
+  }
+}
+
+for (const btn of modeButtons) {
+  btn.addEventListener('click', () => {
+    void selectMode(btn.dataset.mode as VisualMode);
+  });
+}
+
+loop.setOnStateUpdate((state) => {
+  lastBeatState = state.beat;
+  if (audioPlaying || scene.needsWebcam()) {
+    updateModeStatus(state.mood, state.beat);
+  }
+});
+
+updateModeButtons();
+updateSyncButtons();
+updateModeStatus('calm');
+
+window.addEventListener('beforeunload', () => {
+  void scene.setVisualMode('cinematic');
+});
 
 async function playDemo(path: string, label: string) {
   try {
@@ -153,6 +282,16 @@ hoverStopBtn.addEventListener('click', () => {
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') void audioEngine.stop();
+
+  const target = e.target as HTMLElement | null;
+  if (target?.tagName === 'INPUT') return;
+
+  if (e.key === '1') void selectMode('cinematic');
+  if (e.key === '2') void selectMode('live');
+  if (e.key === '3') void selectMode('acid');
+  if (e.key === 's' || e.key === 'S') {
+    selectSync(loop.getSyncMode() === 'auto' ? 'off' : 'auto');
+  }
 });
 
 // Debug: log extraction occasionally (optional).
@@ -169,6 +308,14 @@ function debugTick(dt: number) {
       bass: f.bass.toFixed(3),
       mid: f.mid.toFixed(3),
       high: f.high.toFixed(3),
+      ...(lastBeatState
+        ? {
+            bpm: Math.round(lastBeatState.bpm),
+            confidence: lastBeatState.confidence.toFixed(2),
+            beatPhase: lastBeatState.beatPhase.toFixed(2),
+            syncActive: lastBeatState.syncActive,
+          }
+        : {}),
     });
   }
 }

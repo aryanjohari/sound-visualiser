@@ -197,6 +197,39 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+button.camera-btn--active {
+  background: rgba(120, 160, 255, 0.18);
+  border-color: rgba(120, 160, 255, 0.45);
+  color: #fff;
+}
+
+button.camera-btn--active:hover {
+  background: rgba(120, 160, 255, 0.24);
+  border-color: rgba(120, 160, 255, 0.55);
+}
+
+.mode-row {
+  width: 100%;
+}
+
+.mode-row .mode-btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 10px;
+  font-size: 13px;
+}
+
+button.mode-btn--active {
+  background: rgba(120, 160, 255, 0.18);
+  border-color: rgba(120, 160, 255, 0.45);
+  color: #fff;
+}
+
+button.mode-btn--active:hover {
+  background: rgba(120, 160, 255, 0.24);
+  border-color: rgba(120, 160, 255, 0.55);
+}
+
 input[type='file'] {
   cursor: pointer;
   font: inherit;

@@ -1,5 +1,27 @@
 import type { AudioFeatures } from '../audio/AudioEngine';
 
+export type Mood = 'calm' | 'groove' | 'intense';
+
+export type MoodWeights = {
+  calm: number;
+  groove: number;
+  intense: number;
+};
+
+export type SyncMode = 'auto' | 'off';
+
+export type BeatState = {
+  bpm: number;
+  confidence: number;
+  beatPhase: number;
+  barPhase: number;
+  beatIndex: number;
+  onBeat: boolean;
+  onDownbeat: boolean;
+  syncMode: SyncMode;
+  syncActive: boolean;
+};
+
 export type VJState = {
   rave: number; // 0=cinematic, 1=rave
   cinematic: number; // 1-rave (kept explicit for shader uniforms)
@@ -12,6 +34,9 @@ export type VJState = {
    * so hi-hat spikes hit hard then decay quickly.
    */
   lightningFlash: number;
+  mood: Mood;
+  moodWeights: MoodWeights;
+  beat: BeatState;
 };
 
 function clamp01(v: number) {
@@ -95,7 +120,7 @@ export class StateManager {
       fluxAvg: this.fluxAvg,
       thresholdedHigh,
       lightningFlash: this.lightningFlashSmooth,
-    } satisfies VJState;
+    };
   }
 }
 
