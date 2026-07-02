@@ -1,5 +1,7 @@
 # Sound Visualiser
 
+Visitor overview: see portfolio.yaml.
+
 An audio-reactive WebGL visualizer built with TypeScript, Three.js, Meyda, and custom GLSL shaders.
 
 The project turns real-time audio features (RMS, spectral flux, and frequency-band energies) into:
