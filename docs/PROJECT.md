@@ -1,5 +1,11 @@
 # Sound Visualiser — Project Reference
 
+> **Scope of this document.** This is the exhaustive implementation reference: every visual
+> mode, every shader uniform, the mood parameter matrix, and the tuning constants. For the
+> design rationale, the custom algorithms, and the tradeoffs behind them, read
+> [`ARCHITECTURE.md`](./ARCHITECTURE.md). For install and run instructions, read the
+> [README](../README.md).
+
 ## What the app does
 
 Sound Visualiser is a browser app that listens to audio (microphone, uploaded file, or demo tracks) and turns it into moving visuals on a full-screen WebGL canvas. Three **visual modes** are available:
@@ -225,6 +231,8 @@ All Live uniforms plus:
 | `src/shaders/acidFeedHeader.frag.glsl` | Acid uniforms + varying declarations |
 | `src/shaders/acidFeedBody.frag.glsl` | Acid `main()` body |
 | `docs/PROJECT.md` | This reference |
+| `docs/ARCHITECTURE.md` | Design case study — rationale, custom algorithms, tradeoffs |
+| `docs/architecture.mmd` | System diagram (Mermaid, source of truth) |
 | `docs/PHASE1_CHANGELOG.md` | Phase 1 change log |
 | `docs/PHASE2_CHANGELOG.md` | Phase 2a change log |
 
