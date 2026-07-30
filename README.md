@@ -91,7 +91,9 @@ caught by a typechecker.
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — design case study: the interpretation
   ladder, the beat estimator, the feedback pipeline, and the tradeoffs behind them.
-- [`docs/architecture.mmd`](docs/architecture.mmd) — system diagram (Mermaid).
+- [`docs/c4/`](docs/c4/README.md) — C4 context, containers, and component zooms.
+- [`docs/architecture.mmd`](docs/architecture.mmd) — visitor system diagram (Mermaid).
+- [`docs/architecture.graph.json`](docs/architecture.graph.json) — portfolio map IR (tour).
 - [`docs/PROJECT.md`](docs/PROJECT.md) — detailed component, uniform, and tuning reference.
 - [`docs/PHASE1_CHANGELOG.md`](docs/PHASE1_CHANGELOG.md) and
   [`docs/PHASE2_CHANGELOG.md`](docs/PHASE2_CHANGELOG.md) — incremental development log.

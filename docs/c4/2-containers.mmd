@@ -1,0 +1,35 @@
+flowchart TB
+  subgraph inputs [Inputs]
+    glassUi["glass-ui<br/>Glass controls"]
+    demoAsset["demo-asset<br/>Bundled demo track"]
+    videoCapture["video-capture<br/>Webcam capture"]
+  end
+
+  subgraph core [Core]
+    audioEngine["audio-engine<br/>Audio engine"]
+    featureSnapshot[("feature-snapshot<br/>Latest audio snapshot")]
+    interpretation["interpretation<br/>Interpretation ladder"]
+    renderLoop["render-loop<br/>Frame loop"]
+  end
+
+  subgraph visuals [Visuals]
+    vjScene["vj-scene<br/>VJ scene"]
+  end
+
+  subgraph output [Output]
+    webglCanvas["webgl-canvas<br/>Full-screen canvas"]
+  end
+
+  glassUi -->|"starts mic, file, or demo"| audioEngine
+  demoAsset -->|"plays /freetibet.mp3"| audioEngine
+  glassUi -->|"sets mode and sync"| renderLoop
+  glassUi -.->|"Live / Acid only"| videoCapture
+
+  audioEngine -->|"overwrites latest features"| featureSnapshot
+  renderLoop -->|"reads snapshot each frame"| featureSnapshot
+  featureSnapshot -->|"feeds analysers"| interpretation
+  interpretation -->|"assembles VJState"| renderLoop
+  renderLoop -->|"update + render"| vjScene
+
+  videoCapture -.->|"attaches VideoTexture"| vjScene
+  vjScene -->|"draws WebGL"| webglCanvas

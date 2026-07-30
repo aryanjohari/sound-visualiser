@@ -100,46 +100,38 @@ overwrites a "latest features" struct and the render loop reads whatever is ther
 frames the renderer never sees are dropped for free, and neither side can apply
 backpressure to the other.
 
+## C4 overview (links to docs/c4/*)
+
+Structured C4 diagrams (Context → Containers → Components). No Code-level diagrams.
+
+| Level | Link |
+| --- | --- |
+| Index | [`docs/c4/README.md`](./c4/README.md) |
+| C1 System context | [`docs/c4/1-context.mmd`](./c4/1-context.mmd) |
+| C2 Containers | [`docs/c4/2-containers.mmd`](./c4/2-containers.mmd) |
+| C3 `audio-engine` | [`docs/c4/3-components/audio-engine.mmd`](./c4/3-components/audio-engine.mmd) |
+| C3 `interpretation` | [`docs/c4/3-components/interpretation.mmd`](./c4/3-components/interpretation.mmd) |
+| C3 `vj-scene` | [`docs/c4/3-components/vj-scene.mmd`](./c4/3-components/vj-scene.mmd) |
+
+Portfolio fetch: [`architecture.graph.json`](./architecture.graph.json) (map IR from C2) and
+[`architecture.mmd`](./architecture.mmd) (visitor flowchart). Declared in root
+[`portfolio.yaml`](../portfolio.yaml).
+
 ## System overview
 
-The canonical diagram lives at [`docs/architecture.mmd`](./architecture.mmd) — that file is
-the source of truth and is what the portfolio site renders. It is reproduced here for
-convenience and is kept identical.
+One static SPA in the browser. Logical containers (C2): glass UI and demo asset feed the
+**audio engine**, which overwrites a **latest-features** snapshot; the **frame loop** pulls
+that snapshot into the **interpretation** ladder (energy → mood → beat) and drives the
+**VJ scene** (Cinematic / Live / Acid) onto the **full-screen canvas**. Webcam capture is
+optional and only used in Live and Acid.
 
-```mermaid
-flowchart TD
-  MIC["Microphone"] --> ENGINE
-  FILE["Your own audio file"] --> ENGINE
-  DEMO["Built-in demo track"] --> ENGINE
+Visitor-facing diagrams (kept in sync with C2, collapsed for storytelling):
 
-  ENGINE["Audio engine<br/>loudness, bass / mid / treble,<br/>and how fast the sound is changing"]
-  ENGINE --> SNAP["Latest audio snapshot<br/>read once per drawn frame"]
+- [`docs/architecture.mmd`](./architecture.mmd) — Mermaid flowchart
+- [`docs/architecture.graph.json`](./architecture.graph.json) — portfolio map + tour
 
-  SNAP --> ENERGY["Energy tracker<br/>calm to full-intensity blend"]
-  SNAP --> MOOD["Mood reader<br/>calm / groove / intense"]
-  SNAP --> BEAT["Beat tracker<br/>tempo guess, beat clock,<br/>and how sure it is"]
-
-  ENERGY --> STATE
-  MOOD --> STATE
-  BEAT --> STATE
-  STATE["Scene state for this frame"]
-
-  CAM["Webcam<br/>only for Live and Acid"] --> VIDEO["Live video texture"]
-
-  STATE --> ROUTER{"Which visual mode?"}
-  VIDEO --> ROUTER
-
-  ROUTER -->|Cinematic| SCENE["3D scene<br/>fluid sky, particle knot,<br/>reactive lights, roaming camera"]
-  ROUTER -->|Live| LIVE["Webcam shader<br/>zoom, melt, colour split, glitch"]
-  ROUTER -->|Acid| ACID["Acid shader<br/>kaleidoscope, hue drift, glitch"]
-
-  SCENE --> POST["Colour-split post effect"]
-  ACID <--> FB["Feedback buffers<br/>last frame folded back in<br/>to grow trails"]
-
-  POST --> CANVAS["Full-screen canvas"]
-  LIVE --> CANVAS
-  ACID --> CANVAS
-```
+For the full container map and component zooms, use [`docs/c4/`](./c4/README.md) rather than
+duplicating those fences here.
 
 ## Key components
 

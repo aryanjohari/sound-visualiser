@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "title": "Sound Visualiser",
+  "summary": "Audio from mic, file, or demo is interpreted into energy, mood, and beat, then drives Cinematic, Live, or Acid WebGL visuals — all in the browser, nothing uploaded.",
+  "notes": "Collapsed from C2 containers: energy/mood/beat are one interpretation node; cinematic layer stack and Acid FBO ping-pong are captions only. Full maps: docs/c4/. Dive: docs/c4/portfolio-map.json (component zooms for audio-engine, interpretation, vj-scene).",
+  "skin": "default",
+  "groups": [
+    { "id": "inputs", "label": "Inputs" },
+    { "id": "core", "label": "Core" },
+    { "id": "visuals", "label": "Visuals" },
+    { "id": "output", "label": "Output" }
+  ],
+  "nodes": [
+    {
+      "id": "audio-sources",
+      "label": "Audio sources",
+      "kind": "input",
+      "groupId": "inputs",
+      "shape": "stadium"
+    },
+    {
+      "id": "webcam",
+      "label": "Webcam",
+      "kind": "input",
+      "groupId": "inputs",
+      "shape": "stadium"
+    },
+    {
+      "id": "audio-engine",
+      "label": "Audio engine",
+      "kind": "process",
+      "groupId": "core",
+      "shape": "rounded"
+    },
+    {
+      "id": "interpretation",
+      "label": "Interpretation",
+      "kind": "process",
+      "groupId": "core",
+      "shape": "rounded"
+    },
+    {
+      "id": "vj-scene",
+      "label": "VJ scene",
+      "kind": "decision",
+      "groupId": "visuals",
+      "shape": "diamond"
+    },
+    {
+      "id": "cinematic",
+      "label": "Cinematic 3D",
+      "kind": "process",
+      "groupId": "visuals",
+      "shape": "rounded"
+    },
+    {
+      "id": "live-feed",
+      "label": "Live webcam",
+      "kind": "process",
+      "groupId": "visuals",
+      "shape": "rounded"
+    },
+    {
+      "id": "acid-feed",
+      "label": "Acid feedback",
+      "kind": "process",
+      "groupId": "visuals",
+      "shape": "rounded"
+    },
+    {
+      "id": "canvas",
+      "label": "Full-screen canvas",
+      "kind": "output",
+      "groupId": "output",
+      "shape": "rect"
+    }
+  ],
+  "edges": [
+    { "id": "e-sources-engine", "from": "audio-sources", "to": "audio-engine", "label": "mic, file, or demo", "style": "solid" },
+    { "id": "e-engine-interp", "from": "audio-engine", "to": "interpretation", "label": "loudness, bands, flux", "style": "solid" },
+    { "id": "e-interp-scene", "from": "interpretation", "to": "vj-scene", "label": "energy, mood, beat", "style": "solid" },
+    { "id": "e-scene-cine", "from": "vj-scene", "to": "cinematic", "label": "Cinematic", "style": "solid" },
+    { "id": "e-scene-live", "from": "vj-scene", "to": "live-feed", "label": "Live", "style": "solid" },
+    { "id": "e-scene-acid", "from": "vj-scene", "to": "acid-feed", "label": "Acid", "style": "solid" },
+    { "id": "e-webcam-live", "from": "webcam", "to": "live-feed", "label": "video texture", "style": "dashed" },
+    { "id": "e-webcam-acid", "from": "webcam", "to": "acid-feed", "label": "video texture", "style": "dashed" },
+    { "id": "e-cine-canvas", "from": "cinematic", "to": "canvas", "style": "solid" },
+    { "id": "e-live-canvas", "from": "live-feed", "to": "canvas", "style": "solid" },
+    { "id": "e-acid-canvas", "from": "acid-feed", "to": "canvas", "style": "solid" }
+  ],
+  "tour": [
+    "audio-sources",
+    "audio-engine",
+    "interpretation",
+    "vj-scene",
+    "canvas"
+  ],
+  "captions": [
+    {
+      "id": "audio-sources",
+      "title": "Pick a sound",
+      "body": "Use the microphone, upload a local audio file, or play the bundled demo track.",
+      "items": ["Microphone", "Local file", "Demo: /freetibet.mp3"],
+      "spotlightIds": ["audio-sources"]
+    },
+    {
+      "id": "audio-engine",
+      "title": "Measure the signal",
+      "body": "The audio engine tracks loudness, bass / mid / treble, and how fast the spectrum is changing.",
+      "spotlightIds": ["audio-engine"]
+    },
+    {
+      "id": "interpretation",
+      "title": "Describe the music",
+      "body": "Energy, mood (calm / groove / intense), and a beat clock with confidence turn raw features into a musical description.",
+      "items": ["Energy blend", "Mood weights", "BPM and confidence"],
+      "spotlightIds": ["interpretation"]
+    },
+    {
+      "id": "vj-scene",
+      "title": "Choose a look",
+      "body": "Cinematic builds a reactive 3D scene; Live and Acid warp the webcam — Acid folds each frame back into the next for trails.",
+      "items": ["Cinematic 3D", "Live webcam", "Acid feedback"],
+      "spotlightIds": ["vj-scene", "cinematic", "live-feed", "acid-feed", "webcam"]
+    },
+    {
+      "id": "canvas",
+      "title": "Draw full screen",
+      "body": "Everything stays in your browser tab: capture, analysis, and WebGL rendering — nothing is uploaded.",
+      "spotlightIds": ["canvas"]
+    }
+  ]
+}

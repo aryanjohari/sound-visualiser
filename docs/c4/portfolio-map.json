@@ -1,0 +1,12 @@
+{
+  "c4": {
+    "level": "containers",
+    "containersPath": "docs/c4/2-containers.mmd",
+    "componentsPath": "docs/c4/3-components/",
+    "componentDiagrams": [
+      "audio-engine",
+      "interpretation",
+      "vj-scene"
+    ]
+  }
+}

@@ -1,32 +1,17 @@
 flowchart TD
-  MIC["Microphone"] --> ENGINE
-  FILE["Your own audio file"] --> ENGINE
-  DEMO["Built-in demo track"] --> ENGINE
-
+  SOURCES["Audio sources<br/>mic, local file, or demo track"] --> ENGINE
   ENGINE["Audio engine<br/>loudness, bass / mid / treble,<br/>and how fast the sound is changing"]
-  ENGINE --> SNAP["Latest audio snapshot<br/>read once per drawn frame"]
+  ENGINE --> INTERP["Interpretation<br/>energy, mood, beat confidence"]
+  INTERP --> ROUTER{"VJ scene<br/>which visual mode?"}
 
-  SNAP --> ENERGY["Energy tracker<br/>calm to full-intensity blend"]
-  SNAP --> MOOD["Mood reader<br/>calm / groove / intense"]
-  SNAP --> BEAT["Beat tracker<br/>tempo guess, beat clock,<br/>and how sure it is"]
+  CAM["Webcam<br/>Live and Acid only"] -.-> LIVE
+  CAM -.-> ACID
 
-  ENERGY --> STATE
-  MOOD --> STATE
-  BEAT --> STATE
-  STATE["Scene state for this frame"]
-
-  CAM["Webcam<br/>only for Live and Acid"] --> VIDEO["Live video texture"]
-
-  STATE --> ROUTER{"Which visual mode?"}
-  VIDEO --> ROUTER
-
-  ROUTER -->|Cinematic| SCENE["3D scene<br/>fluid sky, particle knot,<br/>reactive lights, roaming camera"]
-  ROUTER -->|Live| LIVE["Webcam shader<br/>zoom, melt, colour split, glitch"]
-  ROUTER -->|Acid| ACID["Acid shader<br/>kaleidoscope, hue drift, glitch"]
+  ROUTER -->|Cinematic| SCENE["Cinematic 3D<br/>fluid sky, particle knot,<br/>reactive lights, roaming camera"]
+  ROUTER -->|Live| LIVE["Live webcam<br/>zoom, melt, colour split, glitch"]
+  ROUTER -->|Acid| ACID["Acid feedback<br/>kaleidoscope, hue drift,<br/>last frame folded back in"]
 
   SCENE --> POST["Colour-split post effect"]
-  ACID <--> FB["Feedback buffers<br/>last frame folded back in<br/>to grow trails"]
-
   POST --> CANVAS["Full-screen canvas"]
   LIVE --> CANVAS
   ACID --> CANVAS

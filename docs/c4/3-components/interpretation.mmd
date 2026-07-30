@@ -1,0 +1,12 @@
+flowchart LR
+  snap["Latest audio snapshot"] --> sm["StateManager<br/>rave to cinematic energy<br/>+ lightningFlash"]
+  sm --> mood["MoodAnalyzer<br/>calm / groove / intense<br/>weights sum to 1"]
+  snap --> mood
+  snap --> beat["BeatSync<br/>onset, BPM vote,<br/>phase, confidence"]
+  sm --> beat
+  sm --> state["VJState for this frame"]
+  mood --> state
+  beat --> state
+  loop["Loop<br/>orders the three stages"] -.-> sm
+  loop -.-> mood
+  loop -.-> beat

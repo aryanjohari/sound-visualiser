@@ -1,0 +1,20 @@
+flowchart TB
+  subgraph sources [Sources]
+    mic["Microphone stream"]
+    element["Audio element<br/>file or demo URL"]
+  end
+
+  ctx["AudioContext"]
+  meyda["Meyda analyzer<br/>rms + powerSpectrum"]
+  flux["Hand-rolled spectral flux<br/>positive bin deltas"]
+  bands["Band energies<br/>lowpass / bass / mid / high"]
+  latest[("Latest AudioFeatures<br/>overwritten each callback")]
+
+  mic --> ctx
+  element --> ctx
+  ctx --> meyda
+  meyda --> flux
+  meyda --> bands
+  flux --> latest
+  bands --> latest
+  meyda -->|"rms"| latest

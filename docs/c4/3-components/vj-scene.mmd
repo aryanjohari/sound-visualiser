@@ -1,0 +1,21 @@
+flowchart TB
+  state["VJState"] --> router{"Visual mode"}
+  video["VideoTexture<br/>from video-capture"] -.-> live
+  video -.-> acid
+
+  router -->|Cinematic| env["EnvironmentLayers<br/>fluid sphere"]
+  router -->|Cinematic| anchor["AnchorLayer<br/>torus-knot particles"]
+  router -->|Cinematic| lights["LightingLayer"]
+  router -->|Cinematic| director["Director<br/>GSAP camera"]
+  env --> post["PostProcessing<br/>chromatic aberration"]
+  anchor --> post
+  lights --> post
+  director --> post
+
+  router -->|Live| live["LiveFeedLayer<br/>webcam shader"]
+  router -->|Acid| acid["AcidFeedLayer<br/>warp-aligned feedback"]
+  acid <--> fbo[("Ping-pong FBOs")]
+
+  post --> canvas["webgl-canvas"]
+  live --> canvas
+  acid --> canvas

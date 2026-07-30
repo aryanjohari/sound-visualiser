@@ -23,3 +23,4 @@ links:
   github: https://github.com/aryanjohari/sound-visualiser
   demo: https://music.arkhives.nz
 diagram: docs/architecture.mmd
+graph: docs/architecture.graph.json
