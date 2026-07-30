@@ -2,25 +2,23 @@
 
 Zoom of container `audio-engine` (`src/audio/AudioEngine.ts`).
 
-## What it does
+## Components
 
-Owns the `AudioContext` and source lifecycle: microphone via `MediaStreamAudioSourceNode`,
-or an `<audio>` element via `MediaElementAudioSourceNode` (local file blob URL or demo
-path). Attaches Meyda with `bufferSize` 512 and `hopSize` 256, extractors `rms` and
-`powerSpectrum`.
-
-On each analysis callback it:
-
-1. Computes **spectral flux** from consecutive spectra (positive per-bin deltas only —
-   Meyda’s own `spectralFlux` is avoided because it crashes in this web build).
-2. Sums **band energies** (lowpass 0–220 Hz, bass 20–140, mid 200–2000, high 4–12 kHz) and
-   log-compresses them.
-3. **Overwrites** a latest-features struct. Nothing is queued; the render loop pulls
-   whatever is there.
+| Id | Role | Evidence |
+| --- | --- | --- |
+| Microphone / element sources | Mutually exclusive source modes | `startMicrophone`, `startUrl`, `startFile` |
+| AudioContext lifecycle | Create, resume, suspend; stop tracks; revoke blob URLs | `teardown` |
+| Meyda analyzer | `rms` + `powerSpectrum` only | `createAnalyzerAndStart` — `bufferSize` 512, `hopSize` 256 |
+| Spectral flux | Positive bin deltas + `log10(1 + sum)` | Callback; Meyda’s own `spectralFlux` skipped (crashes in this web build) |
+| Band energies | lowpass 0–220, bass 20–140, mid 200–2000, high 4–12 kHz Hz | `bandEnergy` + `hzPerBin = sampleRate / bufferSize` |
+| Latest AudioFeatures | Overwrite-only publish | `this.latest` / `getFeatures()` |
 
 ## Boundaries
 
 - Upstream: glass UI starts mic / file / demo; bundled demo is `/freetibet.mp3`.
 - Downstream: `render-loop` reads the snapshot each frame and feeds `interpretation`.
+
+File playback also connects the element source to `audioContext.destination` so the operator
+hears the track; the mic path analyses only (no destination connect).
 
 Diagram: [`audio-engine.mmd`](./audio-engine.mmd).

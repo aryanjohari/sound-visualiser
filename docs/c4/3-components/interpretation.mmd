@@ -1,12 +1,35 @@
-flowchart LR
-  snap["Latest audio snapshot"] --> sm["StateManager<br/>rave to cinematic energy<br/>+ lightningFlash"]
-  sm --> mood["MoodAnalyzer<br/>calm / groove / intense<br/>weights sum to 1"]
-  snap --> mood
-  snap --> beat["BeatSync<br/>onset, BPM vote,<br/>phase, confidence"]
-  sm --> beat
-  sm --> state["VJState for this frame"]
-  mood --> state
-  beat --> state
-  loop["Loop<br/>orders the three stages"] -.-> sm
-  loop -.-> mood
-  loop -.-> beat
+%% Prefer C4Component. Flowchart equivalent follows as comments.
+
+C4Component
+  title Components — Interpretation ladder
+
+  Container_Boundary(interp, "interpretation") {
+    Component(loop, "Loop sequencer", "src/webgl/Loop.ts", "Fixed per-frame order; owns MoodAnalyzer + BeatSync")
+    Component(sm, "StateManager", "src/webgl/StateManager.ts", "rave to cinematic energy + lightningFlash; peak-relative EMAs")
+    Component(mood, "MoodAnalyzer", "src/webgl/MoodAnalyzer.ts", "calm / groove / intense weights (partition of unity)")
+    Component(beat, "BeatSync", "src/webgl/BeatSync.ts", "Onset pick, 60-180 BPM vote, PLL phase, confidence")
+    ComponentDb(vjstate, "VJState", "per frame", "Merged energy + mood + beat for the scene")
+  }
+
+  Rel(loop, sm, "1. update(features, dt)")
+  Rel(loop, mood, "2. update(features, baseState, dt)")
+  Rel(loop, beat, "3. update(features, baseState, dt, syncMode)")
+  Rel(sm, mood, "Passes rave / averages / lightningFlash")
+  Rel(sm, beat, "Passes rmsAvg for silence gate")
+  Rel(sm, vjstate, "Energy fields")
+  Rel(mood, vjstate, "mood + moodWeights")
+  Rel(beat, vjstate, "beat")
+  Rel(loop, vjstate, "Assembles and publishes")
+
+%% flowchart LR
+%%   snap["Latest audio snapshot"] --> sm2["StateManager"]
+%%   sm2 --> mood2["MoodAnalyzer"]
+%%   snap --> mood2
+%%   snap --> beat2["BeatSync"]
+%%   sm2 --> beat2
+%%   sm2 --> state2["VJState"]
+%%   mood2 --> state2
+%%   beat2 --> state2
+%%   loop2["Loop orders the three stages"] -.-> sm2
+%%   loop2 -.-> mood2
+%%   loop2 -.-> beat2

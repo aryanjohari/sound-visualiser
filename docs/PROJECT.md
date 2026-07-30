@@ -232,7 +232,8 @@ All Live uniforms plus:
 | `src/shaders/acidFeedBody.frag.glsl` | Acid `main()` body |
 | `docs/PROJECT.md` | This reference |
 | `docs/ARCHITECTURE.md` | Design case study — rationale, custom algorithms, tradeoffs |
-| `docs/architecture.mmd` | System diagram (Mermaid, source of truth) |
+| `docs/c4/` | Canonical C4 diagrams (Context → Containers → Components) |
+| `docs/architecture.mmd` | Optional collapsed visitor Mermaid (not C4 SoT) |
 | `docs/PHASE1_CHANGELOG.md` | Phase 1 change log |
 | `docs/PHASE2_CHANGELOG.md` | Phase 2a change log |
 

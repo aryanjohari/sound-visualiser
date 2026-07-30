@@ -1,12 +1,59 @@
 {
-  "c4": {
-    "level": "containers",
-    "containersPath": "docs/c4/2-containers.mmd",
-    "componentsPath": "docs/c4/3-components/",
-    "componentDiagrams": [
-      "audio-engine",
-      "interpretation",
-      "vj-scene"
-    ]
-  }
+  "version": 1,
+  "defaultLevel": "context",
+  "context": { "path": "docs/c4/1-context.mmd" },
+  "containers": { "path": "docs/c4/2-containers.mmd" },
+  "zoom": [
+    {
+      "id": "sound-visualiser",
+      "label": "Sound Visualiser",
+      "fromLevel": "context",
+      "toLevel": "containers",
+      "matchLabels": ["Sound Visualiser"]
+    },
+    {
+      "id": "audio-engine",
+      "label": "Audio engine",
+      "fromLevel": "containers",
+      "toLevel": "components",
+      "matchLabels": ["Audio engine", "audio-engine"],
+      "componentsPath": "docs/c4/3-components/audio-engine.mmd"
+    },
+    {
+      "id": "interpretation",
+      "label": "Interpretation ladder",
+      "fromLevel": "containers",
+      "toLevel": "components",
+      "matchLabels": ["Interpretation ladder", "interpretation"],
+      "componentsPath": "docs/c4/3-components/interpretation.mmd"
+    },
+    {
+      "id": "vj-scene",
+      "label": "VJ scene",
+      "fromLevel": "containers",
+      "toLevel": "components",
+      "matchLabels": ["VJ scene", "vj-scene"],
+      "componentsPath": "docs/c4/3-components/vj-scene.mmd"
+    }
+  ],
+  "componentZooms": [
+    {
+      "id": "audio-engine",
+      "label": "Audio engine",
+      "path": "docs/c4/3-components/audio-engine.mmd",
+      "markdownPath": "docs/c4/3-components/audio-engine.md"
+    },
+    {
+      "id": "interpretation",
+      "label": "Interpretation ladder",
+      "path": "docs/c4/3-components/interpretation.mmd",
+      "markdownPath": "docs/c4/3-components/interpretation.md"
+    },
+    {
+      "id": "vj-scene",
+      "label": "VJ scene",
+      "path": "docs/c4/3-components/vj-scene.mmd",
+      "markdownPath": "docs/c4/3-components/vj-scene.md"
+    }
+  ]
 }

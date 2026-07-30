@@ -1,35 +1,63 @@
-flowchart TB
-  subgraph inputs [Inputs]
-    glassUi["glass-ui<br/>Glass controls"]
-    demoAsset["demo-asset<br/>Bundled demo track"]
-    videoCapture["video-capture<br/>Webcam capture"]
-  end
+%% Prefer Mermaid C4Container. If a renderer rejects C4 syntax, use the flowchart
+%% equivalent at the bottom (uncomment that block).
 
-  subgraph core [Core]
-    audioEngine["audio-engine<br/>Audio engine"]
-    featureSnapshot[("feature-snapshot<br/>Latest audio snapshot")]
-    interpretation["interpretation<br/>Interpretation ladder"]
-    renderLoop["render-loop<br/>Frame loop"]
-  end
+C4Container
+  title Containers — Sound Visualiser (single browser SPA)
 
-  subgraph visuals [Visuals]
-    vjScene["vj-scene<br/>VJ scene"]
-  end
+  Person(operator, "Operator", "Chooses sources, modes, and sync")
 
-  subgraph output [Output]
-    webglCanvas["webgl-canvas<br/>Full-screen canvas"]
-  end
+  System_Boundary(spa, "Sound Visualiser — one static SPA in the browser tab") {
+    Container(glassUi, "Glass controls", "TypeScript / DOM", "Source buttons, mode and sync, status line")
+    ContainerDb(demoAsset, "Bundled demo track", "static mp3", "Shipped /freetibet.mp3 with the build")
+    Container(audioEngine, "Audio engine", "Web Audio + Meyda", "Mic / file / URL sources, RMS, bands, spectral flux")
+    ContainerDb(featureSnapshot, "Latest audio snapshot", "in-memory struct", "Pull-model handoff; overwritten, never queued")
+    Container(interpretation, "Interpretation ladder", "TypeScript", "Energy, mood weights, beat / confidence")
+    Container(renderLoop, "Frame loop", "requestAnimationFrame", "Orders analysers, camera impulses, scene update + render")
+    Container(videoCapture, "Webcam capture", "getUserMedia", "Hidden video to Three.js VideoTexture (Live / Acid only)")
+    Container(vjScene, "VJ scene", "Three.js + GLSL", "Mode routing and visual layers")
+    Container(webglCanvas, "Full-screen canvas", "HTML canvas #webgl", "Display output")
+  }
 
-  glassUi -->|"starts mic, file, or demo"| audioEngine
-  demoAsset -->|"plays /freetibet.mp3"| audioEngine
-  glassUi -->|"sets mode and sync"| renderLoop
-  glassUi -.->|"Live / Acid only"| videoCapture
+  Rel(operator, glassUi, "Uses")
+  Rel(glassUi, audioEngine, "Starts mic, file, or demo")
+  Rel(demoAsset, audioEngine, "Played as /freetibet.mp3")
+  Rel(glassUi, renderLoop, "Sets visual mode and sync")
+  Rel(glassUi, videoCapture, "Starts camera for Live / Acid")
+  Rel(audioEngine, featureSnapshot, "Overwrites latest features")
+  Rel(renderLoop, featureSnapshot, "Reads snapshot each frame")
+  Rel(featureSnapshot, interpretation, "Feeds analysers")
+  Rel(interpretation, renderLoop, "Assembles VJState")
+  Rel(renderLoop, vjScene, "update + render")
+  Rel(videoCapture, vjScene, "Attaches VideoTexture when Live / Acid")
+  Rel(vjScene, webglCanvas, "Draws WebGL")
 
-  audioEngine -->|"overwrites latest features"| featureSnapshot
-  renderLoop -->|"reads snapshot each frame"| featureSnapshot
-  featureSnapshot -->|"feeds analysers"| interpretation
-  interpretation -->|"assembles VJState"| renderLoop
-  renderLoop -->|"update + render"| vjScene
-
-  videoCapture -.->|"attaches VideoTexture"| vjScene
-  vjScene -->|"draws WebGL"| webglCanvas
+%% --- flowchart equivalent (same shape; uncomment if C4Container fails) ---
+%% flowchart TB
+%%   subgraph inputs [Inputs]
+%%     glassUi2["glass-ui — Glass controls"]
+%%     demoAsset2["demo-asset — Bundled demo track"]
+%%     videoCapture2["video-capture — Webcam capture"]
+%%   end
+%%   subgraph core [Core]
+%%     audioEngine2["audio-engine — Audio engine"]
+%%     featureSnapshot2[("feature-snapshot — Latest audio snapshot")]
+%%     interpretation2["interpretation — Interpretation ladder"]
+%%     renderLoop2["render-loop — Frame loop"]
+%%   end
+%%   subgraph visuals [Visuals]
+%%     vjScene2["vj-scene — VJ scene"]
+%%   end
+%%   subgraph output [Output]
+%%     webglCanvas2["webgl-canvas — Full-screen canvas"]
+%%   end
+%%   glassUi2 -->|"starts mic, file, or demo"| audioEngine2
+%%   demoAsset2 -->|"plays /freetibet.mp3"| audioEngine2
+%%   glassUi2 -->|"sets mode and sync"| renderLoop2
+%%   glassUi2 -.->|"Live / Acid only"| videoCapture2
+%%   audioEngine2 -->|"overwrites latest features"| featureSnapshot2
+%%   renderLoop2 -->|"reads snapshot each frame"| featureSnapshot2
+%%   featureSnapshot2 -->|"feeds analysers"| interpretation2
+%%   interpretation2 -->|"assembles VJState"| renderLoop2
+%%   renderLoop2 -->|"update + render"| vjScene2
+%%   videoCapture2 -.->|"attaches VideoTexture"| vjScene2
+%%   vjScene2 -->|"draws WebGL"| webglCanvas2

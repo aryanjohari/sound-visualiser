@@ -1,7 +1,7 @@
 # C1 — System context
 
 Sound Visualiser is one system: a static web app that runs entirely in the operator’s
-browser tab. There is no application server, database, or account.
+browser tab. There is no application server, database, auth, or telemetry.
 
 ## People
 
@@ -16,14 +16,18 @@ browser tab. There is no application server, database, or account.
 
 ## External systems (browser + delivery)
 
-| External | Role |
-| --- | --- |
-| Web Audio API | Audio graph, mic/element sources, Meyda analysis clock |
-| `getUserMedia` | Microphone and webcam streams (secure context + permission) |
-| WebGL | Three.js renderer and custom GLSL |
-| Static demo host | Serves the built SPA and `/freetibet.mp3` at music.arkhives.nz |
-| GitHub | Source and architecture docs |
+| External | Role | Evidence |
+| --- | --- | --- |
+| Web Audio API | Audio graph, mic/element sources, Meyda analysis clock | `src/audio/AudioEngine.ts` |
+| `getUserMedia` | Microphone and webcam streams (secure context + permission) | `AudioEngine`, `VideoCapture` |
+| WebGL | Three.js renderer and custom GLSL | `main.ts`, `src/webgl/*`, `src/shaders/*` |
+| Static demo host | Serves the built SPA and `/freetibet.mp3` | `portfolio.yaml` `demo:`, `public/freetibet.mp3` |
+| GitHub | Source and architecture docs | `portfolio.yaml` `links.github` |
 
-Hosting vendor for the demo domain is not configured in this repository.
+### Notes / UNVERIFIED
+
+- Live demo URL in `portfolio.yaml` / README: `https://music.arkhives.nz`.
+- **Hosting vendor** for that domain is not configured in this repository (`UNVERIFIED`).
+- Libraries (Three.js, Meyda, GSAP, Vite) are **inside** the SPA bundle, not external systems.
 
 Diagram: [`1-context.mmd`](./1-context.mmd). Next level: [`2-containers`](./2-containers.md).

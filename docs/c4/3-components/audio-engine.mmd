@@ -1,20 +1,33 @@
-flowchart TB
-  subgraph sources [Sources]
-    mic["Microphone stream"]
-    element["Audio element<br/>file or demo URL"]
-  end
+%% Prefer C4Component. Flowchart equivalent follows as comments.
 
-  ctx["AudioContext"]
-  meyda["Meyda analyzer<br/>rms + powerSpectrum"]
-  flux["Hand-rolled spectral flux<br/>positive bin deltas"]
-  bands["Band energies<br/>lowpass / bass / mid / high"]
-  latest[("Latest AudioFeatures<br/>overwritten each callback")]
+C4Component
+  title Components — Audio engine
 
-  mic --> ctx
-  element --> ctx
-  ctx --> meyda
-  meyda --> flux
-  meyda --> bands
-  flux --> latest
-  bands --> latest
-  meyda -->|"rms"| latest
+  Container_Boundary(ae, "audio-engine") {
+    Component(srcMic, "Microphone source", "MediaStreamAudioSourceNode", "getUserMedia audio track")
+    Component(srcEl, "Element source", "MediaElementAudioSourceNode", "Local file blob URL or demo / URL")
+    Component(ctx, "AudioContext lifecycle", "Web Audio", "Create, resume, suspend; teardown tracks and blob URLs")
+    Component(meyda, "Meyda analyzer", "rms + powerSpectrum", "bufferSize 512, hopSize 256")
+    Component(flux, "Spectral flux", "hand-rolled", "Positive per-bin deltas, log10 compress — Meyda spectralFlux avoided")
+    Component(bands, "Band energies", "TypeScript", "lowpass / bass / mid / high via hzPerBin")
+    ComponentDb(latest, "Latest AudioFeatures", "in-memory", "Overwritten each Meyda callback; no queue")
+  }
+
+  Rel(srcMic, ctx, "Feeds")
+  Rel(srcEl, ctx, "Feeds")
+  Rel(ctx, meyda, "Attaches analyzer")
+  Rel(meyda, flux, "powerSpectrum frames")
+  Rel(meyda, bands, "powerSpectrum frames")
+  Rel(meyda, latest, "rms")
+  Rel(flux, latest, "spectralFlux")
+  Rel(bands, latest, "band fields")
+
+%% flowchart TB
+%%   mic["Microphone stream"] --> ctx2["AudioContext"]
+%%   element["Audio element — file or demo URL"] --> ctx2
+%%   ctx2 --> meyda2["Meyda analyzer — rms + powerSpectrum"]
+%%   meyda2 --> flux2["Hand-rolled spectral flux"]
+%%   meyda2 --> bands2["Band energies"]
+%%   meyda2 -->|"rms"| latest2[("Latest AudioFeatures")]
+%%   flux2 --> latest2
+%%   bands2 --> latest2

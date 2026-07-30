@@ -100,9 +100,10 @@ overwrites a "latest features" struct and the render loop reads whatever is ther
 frames the renderer never sees are dropped for free, and neither side can apply
 backpressure to the other.
 
-## C4 overview (links to docs/c4/*)
+## C4 overview (canonical diagrams)
 
-Structured C4 diagrams (Context → Containers → Components). No Code-level diagrams.
+Structured C4 diagrams built bottom-up from this repo (Context → Containers → Components).
+No Code-level diagrams. **Source of truth:** [`docs/c4/`](./c4/README.md).
 
 | Level | Link |
 | --- | --- |
@@ -112,10 +113,9 @@ Structured C4 diagrams (Context → Containers → Components). No Code-level di
 | C3 `audio-engine` | [`docs/c4/3-components/audio-engine.mmd`](./c4/3-components/audio-engine.mmd) |
 | C3 `interpretation` | [`docs/c4/3-components/interpretation.mmd`](./c4/3-components/interpretation.mmd) |
 | C3 `vj-scene` | [`docs/c4/3-components/vj-scene.mmd`](./c4/3-components/vj-scene.mmd) |
+| Zoom index | [`docs/c4/portfolio-map.json`](./c4/portfolio-map.json) |
 
-Portfolio fetch: [`architecture.graph.json`](./architecture.graph.json) (map IR from C2) and
-[`architecture.mmd`](./architecture.mmd) (visitor flowchart). Declared in root
-[`portfolio.yaml`](../portfolio.yaml).
+Declared in root [`portfolio.yaml`](../portfolio.yaml) (`diagram:`, `c4:`, `links.docs`).
 
 ## System overview
 
@@ -125,13 +125,10 @@ that snapshot into the **interpretation** ladder (energy → mood → beat) and 
 **VJ scene** (Cinematic / Live / Acid) onto the **full-screen canvas**. Webcam capture is
 optional and only used in Live and Acid.
 
-Visitor-facing diagrams (kept in sync with C2, collapsed for storytelling):
-
-- [`docs/architecture.mmd`](./architecture.mmd) — Mermaid flowchart
-- [`docs/architecture.graph.json`](./architecture.graph.json) — portfolio map + tour
-
-For the full container map and component zooms, use [`docs/c4/`](./c4/README.md) rather than
-duplicating those fences here.
+Do not duplicate large Mermaid fences here — they drift. Use [`docs/c4/`](./c4/README.md).
+Optional collapsed visitor overview: [`docs/architecture.mmd`](./architecture.mmd)
+(storytelling only; not the C4 source of truth). The old portfolio flowchart IR is archived
+under [`docs/archive/`](./archive/README.md).
 
 ## Key components
 

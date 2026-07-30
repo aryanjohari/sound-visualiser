@@ -1,21 +1,45 @@
-flowchart TB
-  state["VJState"] --> router{"Visual mode"}
-  video["VideoTexture<br/>from video-capture"] -.-> live
-  video -.-> acid
+%% Prefer C4Component. Flowchart equivalent follows as comments.
 
-  router -->|Cinematic| env["EnvironmentLayers<br/>fluid sphere"]
-  router -->|Cinematic| anchor["AnchorLayer<br/>torus-knot particles"]
-  router -->|Cinematic| lights["LightingLayer"]
-  router -->|Cinematic| director["Director<br/>GSAP camera"]
-  env --> post["PostProcessing<br/>chromatic aberration"]
-  anchor --> post
-  lights --> post
-  director --> post
+C4Component
+  title Components — VJ scene
 
-  router -->|Live| live["LiveFeedLayer<br/>webcam shader"]
-  router -->|Acid| acid["AcidFeedLayer<br/>warp-aligned feedback"]
-  acid <--> fbo[("Ping-pong FBOs")]
+  Container_Boundary(scene, "vj-scene") {
+    Component(router, "VJScene mode router", "src/webgl/Scene.ts", "Serialises mode changes; webcam attach/detach")
+    Component(env, "EnvironmentLayers", "fluid sphere GLSL", "Bass warp + high lightning")
+    Component(anchor, "AnchorLayer", "torus-knot particles", "Curl-noise deformation")
+    Component(lights, "LightingLayer", "Three.js lights", "Centre flash from lightningFlash")
+    Component(director, "Director", "GSAP camera", "Orbit, FOV, kick shake, Z-dolly punch")
+    Component(post, "PostProcessing", "EffectComposer", "Custom chromatic aberration — Cinematic only")
+    Component(live, "LiveFeedLayer", "webcam shader", "Frozen reference look; direct canvas blit")
+    Component(acid, "AcidFeedLayer", "FBO feedback", "header + liveFeedCommon + body; warp-aligned trails")
+    ComponentDb(fbo, "Ping-pong FBOs", "WebGLRenderTarget A/B", "Acid feedback buffers")
+  }
 
-  post --> canvas["webgl-canvas"]
-  live --> canvas
-  acid --> canvas
+  Rel(router, env, "Always updates 3D layers")
+  Rel(router, anchor, "Always updates 3D layers")
+  Rel(router, lights, "Always updates 3D layers")
+  Rel(router, director, "Always updates 3D layers")
+  Rel(router, post, "Cinematic render path")
+  Rel(router, live, "Live mode render")
+  Rel(router, acid, "Acid mode render")
+  Rel(acid, fbo, "Read / write alternate")
+  Rel(fbo, acid, "Previous frame sample")
+
+%% flowchart TB
+%%   state["VJState"] --> router2{"Visual mode"}
+%%   video["VideoTexture"] -.-> live2
+%%   video -.-> acid2
+%%   router2 -->|Cinematic| env2["EnvironmentLayers"]
+%%   router2 -->|Cinematic| anchor2["AnchorLayer"]
+%%   router2 -->|Cinematic| lights2["LightingLayer"]
+%%   router2 -->|Cinematic| director2["Director"]
+%%   env2 --> post2["PostProcessing"]
+%%   anchor2 --> post2
+%%   lights2 --> post2
+%%   director2 --> post2
+%%   router2 -->|Live| live2["LiveFeedLayer"]
+%%   router2 -->|Acid| acid2["AcidFeedLayer"]
+%%   acid2 <--> fbo2[("Ping-pong FBOs")]
+%%   post2 --> canvas["webgl-canvas"]
+%%   live2 --> canvas
+%%   acid2 --> canvas
