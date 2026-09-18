@@ -1,20 +1,22 @@
 C4Context
   title System Context — Sound Visualiser
 
-  Person(operator, "Operator", "Plays a track, uses the mic, or points a webcam at the room")
+  Person(operator, "Operator", "Plays a track, nudges a look, may keep a short local clip")
 
-  System(sv, "Sound Visualiser", "Browser VJ rig: interprets audio into energy, mood, and beat, then drives WebGL visuals. Nothing is uploaded.")
+  System(sv, "Sound Visualiser", "Browser look instrument: interpretation drives WebGL; look JSON reloads; Keep is a local canvas+audio clip. Nothing is uploaded.")
 
   System_Ext(webAudio, "Web Audio API", "Browser audio graph and analysis clock")
   System_Ext(media, "getUserMedia", "Browser mic and camera permission + streams")
   System_Ext(webgl, "WebGL", "GPU canvas rendering at display refresh rate")
+  System_Ext(recorder, "MediaRecorder", "Local canvas + audio clip in the tab")
   System_Ext(host, "Static demo host", "Serves the built SPA and bundled demo track")
   System_Ext(github, "GitHub", "Source repository and docs")
 
-  Rel(operator, sv, "Chooses audio source, visual mode, and beat sync")
+  Rel(operator, sv, "Plays a track, may keep a clip and look JSON")
   Rel(sv, webAudio, "Analyses loudness, bands, and spectral change")
   Rel(sv, media, "Captures microphone and optional webcam")
   Rel(sv, webgl, "Draws the full-screen scene")
+  Rel(sv, recorder, "Keeps ≤30s picture and soundtrack locally")
   Rel(operator, host, "Opens the live demo in a browser")
   Rel(host, sv, "Delivers static build and /freetibet.mp3")
   Rel(operator, github, "Reads source and architecture docs")

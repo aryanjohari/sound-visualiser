@@ -12,6 +12,20 @@ function smoothstep(edge0: number, edge1: number, x: number) {
 
 const DEFAULT_WEIGHTS: MoodWeights = { calm: 1, groove: 0, intense: 0 };
 
+/** Partition of unity used by the live mood path. */
+export function partitionMoodWeights(calm: number, groove: number, intense: number): MoodWeights {
+  const sum = calm + groove + intense + 1e-9;
+  return {
+    calm: calm / sum,
+    groove: groove / sum,
+    intense: intense / sum,
+  };
+}
+
+export function moodWeightSum(weights: MoodWeights) {
+  return weights.calm + weights.groove + weights.intense;
+}
+
 export class MoodAnalyzer {
   private weights: MoodWeights = { ...DEFAULT_WEIGHTS };
   private rmsPeak = 1e-6;
@@ -49,12 +63,7 @@ export class MoodAnalyzer {
     const intenseRaw =
       state.rave * 0.42 + fluxN * 0.32 + state.lightningFlash * 0.18 + fluxVar * 0.28;
 
-    const sum = calmRaw + grooveRaw + intenseRaw + 1e-9;
-    const target: MoodWeights = {
-      calm: calmRaw / sum,
-      groove: grooveRaw / sum,
-      intense: intenseRaw / sum,
-    };
+    const target = partitionMoodWeights(calmRaw, grooveRaw, intenseRaw);
 
     const alpha = 1 - Math.pow(1 - this.moodAlpha, Math.max(0.001, dtSeconds * 60));
     this.weights = {
@@ -63,12 +72,11 @@ export class MoodAnalyzer {
       intense: this.weights.intense * (1 - alpha) + target.intense * alpha,
     };
 
-    const wSum = this.weights.calm + this.weights.groove + this.weights.intense + 1e-9;
-    const moodWeights: MoodWeights = {
-      calm: this.weights.calm / wSum,
-      groove: this.weights.groove / wSum,
-      intense: this.weights.intense / wSum,
-    };
+    const moodWeights = partitionMoodWeights(
+      this.weights.calm,
+      this.weights.groove,
+      this.weights.intense,
+    );
 
     let mood: Mood = 'calm';
     if (moodWeights.groove >= moodWeights.calm && moodWeights.groove >= moodWeights.intense) {

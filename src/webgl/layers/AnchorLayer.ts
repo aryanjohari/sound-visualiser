@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../../look/types';
 import type { VJState } from '../StateManager';
 
 import anchorVert from '../../shaders/anchor.vert.glsl?raw';
@@ -57,7 +58,7 @@ export class AnchorLayer {
     threeScene.add(this.points);
   }
 
-  update(dtSeconds: number, features: AudioFeatures, state: VJState) {
+  update(dtSeconds: number, features: AudioFeatures, state: VJState, axes: LookAxes = identityAxes()) {
     if (!this.material || !this.points) return;
 
     const bass = Math.max(0, features.bass);
@@ -74,16 +75,17 @@ export class AnchorLayer {
     const bassN = bass / (this.bassPeak + 1e-9);
     const highN = high / (this.highPeak + 1e-9);
     const rmsN = rms / (this.rmsPeak + 1e-9);
+    const rave = state.rave * axes.intensity;
 
     this.material.uniforms.u_time.value += dtSeconds;
-    this.material.uniforms.u_mid.value = Math.min(1.4, midN);
-    this.material.uniforms.u_high.value = Math.min(1.5, highN);
+    this.material.uniforms.u_mid.value = Math.min(1.4, midN * axes.intensity);
+    this.material.uniforms.u_high.value = Math.min(1.5, highN * axes.intensity);
     this.material.uniforms.u_lightningFlash.value = state.lightningFlash;
     // Pump entire knot; keep a floor so it never collapses to a point.
-    this.material.uniforms.u_bass.value = 0.88 + 0.34 * Math.min(1.35, bassN);
+    this.material.uniforms.u_bass.value = 0.88 + 0.34 * Math.min(1.35, bassN * axes.intensity);
 
-    const spinBase = 0.05 + 0.12 * state.rave;
-    const spinRms = 0.65 * Math.min(1.25, rmsN) * (0.45 + 0.55 * state.rave);
+    const spinBase = 0.05 + 0.12 * rave;
+    const spinRms = 0.65 * Math.min(1.25, rmsN) * (0.45 + 0.55 * rave);
     this.points.rotation.y += dtSeconds * (spinBase + spinRms);
   }
 }

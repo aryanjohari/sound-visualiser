@@ -31,7 +31,8 @@ There is no backend. No audio, video, or telemetry leaves the browser tab.
 
 **Non-goals**
 
-- Not an audio editor or DAW. No transport, no timeline, no export or recording.
+- Not an audio editor or DAW. No transport, no timeline. Short local canvas+audio
+  capture is in-lane; arrangement or export-to-Ableton is not.
 - No genre classification and no machine learning. Mood here is an energy-shape heuristic,
   deliberately, so it works on material it has never seen.
 - No external control surfaces — no MIDI, DMX, OSC, or network sync.
@@ -122,8 +123,10 @@ Declared in root [`portfolio.yaml`](../portfolio.yaml) (`diagram:`, `c4:`, `link
 One static SPA in the browser. Logical containers (C2): glass UI and demo asset feed the
 **audio engine**, which overwrites a **latest-features** snapshot; the **frame loop** pulls
 that snapshot into the **interpretation** ladder (energy → mood → beat) and drives the
-**VJ scene** (Cinematic / Live / Acid) onto the **full-screen canvas**. Webcam capture is
-optional and only used in Live and Acid.
+**VJ scene** (Cinematic / Live / Acid) onto the **full-screen canvas**. A **look document**
+(JSON schema + apply) is the one writer for look, sync, and axes. **Keep** taps the same
+canvas plus audio for a ≤30s local clip (HUD out). Webcam capture is optional and only
+used in Live and Acid. There is no backend and no talk API.
 
 Do not duplicate large Mermaid fences here — they drift. Use [`docs/c4/`](./c4/README.md).
 Optional collapsed visitor overview: [`docs/architecture.mmd`](./architecture.mmd)
@@ -134,6 +137,8 @@ under [`docs/archive/`](./archive/README.md).
 
 | Component | File | Responsibility |
 |---|---|---|
+| `LookInstrument` | `src/look/` | Closed look JSON (`schemaVersion: 1`): parse, serialize, one apply writer for look / sync / axes. |
+| `KeepCapture` | `src/capture/KeepCapture.ts` | ≤30s MediaRecorder of canvas + audio tap; HUD not in pixels; fail closed on silence. |
 | `AudioEngine` | `src/audio/AudioEngine.ts` | Owns the `AudioContext` and source lifecycle (mic stream, `<audio>` element, blob URLs). Runs Meyda and publishes a latest-features struct. |
 | `StateManager` | `src/webgl/StateManager.ts` | Frame-rate-independent smoothing into the `rave` ↔ `cinematic` energy axis plus the fast `lightningFlash` channel. Also home of the shared `VJState` / `BeatState` types. |
 | `MoodAnalyzer` | `src/webgl/MoodAnalyzer.ts` | Scores calm / groove / intense from energy shape and flux variance, normalizes to weights summing to one, smooths the result. |

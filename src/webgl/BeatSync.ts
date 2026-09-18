@@ -23,20 +23,131 @@ function median(values: number[]) {
 
 // --- Tunable constants ---
 export const CONFIDENCE_THRESHOLD = 0.45;
-const MIN_ONSETS = 4;
+export const MIN_ONSETS = 4;
 const ONSET_COOLDOWN_SEC = 0.22;
 const ONSET_FLUX_BAR = 0.78;
 const ONSET_BASS_BAR = 0.72;
-const BPM_MIN = 60;
-const BPM_MAX = 180;
+export const BPM_MIN = 60;
+export const BPM_MAX = 180;
 const INTERVAL_BUFFER_SIZE = 12;
-const SILENCE_RMS_N = 0.08;
+export const SILENCE_RMS_N = 0.08;
 const WARMUP_SEC = 2.5;
 const IOI_MIN = 60 / BPM_MAX; // 0.33s
 const IOI_MAX = 60 / BPM_MIN; // 1.0s
 const BPM_SMOOTH_ALPHA = 0.08;
 const CONF_SMOOTH_ALPHA = 0.1;
 const PLL_NUDGE = 0.35;
+
+export type TempoVote = {
+  bestBpm: number;
+  bestScore: number;
+  secondBpm: number;
+  secondScore: number;
+};
+
+/** Score one integer BPM by IOI hits on period and double-period (12% window). */
+export function scoreIoiVote(intervals: number[], bpm: number): number {
+  if (intervals.length === 0) return 0;
+  const period = 60 / bpm;
+  let hits = 0;
+  for (const ioi of intervals) {
+    let matched = false;
+    for (const k of [1, 2]) {
+      const err = Math.abs(ioi - k * period) / period;
+      if (err < 0.12) {
+        matched = true;
+        break;
+      }
+    }
+    if (matched) hits += 1;
+  }
+  return hits / intervals.length;
+}
+
+/** Brute-force IOI vote over integer BPM 60–180, scoring period and double-period hits. */
+export function voteTempo(intervals: number[], fallbackBpm = 120): TempoVote {
+  let bestBpm = fallbackBpm;
+  let bestScore = -1;
+  let secondBpm = fallbackBpm;
+  let secondScore = -1;
+
+  if (intervals.length === 0) {
+    return { bestBpm, bestScore, secondBpm, secondScore };
+  }
+
+  for (let b = BPM_MIN; b <= BPM_MAX; b += 1) {
+    const score = scoreIoiVote(intervals, b);
+    if (score > bestScore) {
+      secondScore = bestScore;
+      secondBpm = bestBpm;
+      bestScore = score;
+      bestBpm = b;
+    } else if (score > secondScore) {
+      secondScore = score;
+      secondBpm = b;
+    }
+  }
+
+  return { bestBpm, bestScore, secondBpm, secondScore };
+}
+
+/** When best/second BPM are ~2:1, prefer the period closer to the median IOI. */
+export function octaveTiebreak(vote: TempoVote, intervals: number[]): number {
+  let bestBpm = vote.bestBpm;
+  const ratio = vote.bestBpm / (vote.secondBpm + 1e-9);
+  if (vote.secondScore > 0 && (ratio > 1.8 || ratio < 0.55)) {
+    const med = median(intervals);
+    const errBest = Math.abs(60 / vote.bestBpm - med);
+    const errSecond = Math.abs(60 / vote.secondBpm - med);
+    if (errSecond < errBest) bestBpm = vote.secondBpm;
+  }
+  return bestBpm;
+}
+
+export function estimateBpmFromIntervals(intervals: number[], currentBpm: number): number | null {
+  const vote = voteTempo(intervals, currentBpm);
+  if (vote.bestScore > 0) return octaveTiebreak(vote, intervals);
+  return null;
+}
+
+/** Product of onset-count × consistency × BPM stability × energy gate × warmup. */
+export function productConfidence(
+  nFactor: number,
+  consistency: number,
+  bpmStability: number,
+  energyGate: number,
+  warmup: number,
+) {
+  return nFactor * consistency * bpmStability * energyGate * warmup;
+}
+
+export function confidenceFromIntervals(opts: {
+  intervalCount: number;
+  intervals: number[];
+  bpm: number;
+  prevBpm: number;
+  rmsN: number;
+  elapsedSec: number;
+}) {
+  const nFactor = smoothstep(MIN_ONSETS, MIN_ONSETS + 4, opts.intervalCount);
+  const period = 60 / opts.bpm;
+
+  let totalErr = 0;
+  for (const ioi of opts.intervals) {
+    let minErr = Infinity;
+    for (const k of [1, 2]) {
+      minErr = Math.min(minErr, Math.abs(ioi - k * period) / period);
+    }
+    totalErr += minErr;
+  }
+  const meanErr = totalErr / Math.max(1, opts.intervals.length);
+  const consistency = 1 - clamp01(meanErr / 0.15);
+  const bpmStability = 1 - clamp01(Math.abs(opts.bpm - opts.prevBpm) / 8);
+  const energyGate = smoothstep(SILENCE_RMS_N, 0.25, opts.rmsN);
+  const warmup = clamp01(opts.elapsedSec / WARMUP_SEC);
+
+  return productConfidence(nFactor, consistency, bpmStability, energyGate, warmup);
+}
 
 export function defaultBeatState(syncMode: SyncMode = 'auto'): BeatState {
   return {
@@ -178,74 +289,25 @@ export class BeatSync {
   }
 
   private estimateBpm() {
-    let bestBpm = this.bpm;
-    let bestScore = -1;
-    let secondBpm = this.bpm;
-    let secondScore = -1;
-
-    for (let b = BPM_MIN; b <= BPM_MAX; b += 1) {
-      const period = 60 / b;
-      let hits = 0;
-      for (const ioi of this.intervals) {
-        let matched = false;
-        for (const k of [1, 2]) {
-          const err = Math.abs(ioi - k * period) / period;
-          if (err < 0.12) {
-            matched = true;
-            break;
-          }
-        }
-        if (matched) hits += 1;
-      }
-      const score = hits / this.intervals.length;
-      if (score > bestScore) {
-        secondScore = bestScore;
-        secondBpm = bestBpm;
-        bestScore = score;
-        bestBpm = b;
-      } else if (score > secondScore) {
-        secondScore = score;
-        secondBpm = b;
-      }
-    }
-
-    if (bestScore > 0) {
-      const ratio = bestBpm / (secondBpm + 1e-9);
-      if (secondScore > 0 && (ratio > 1.8 || ratio < 0.55)) {
-        const med = median(this.intervals);
-        const errBest = Math.abs(60 / bestBpm - med);
-        const errSecond = Math.abs(60 / secondBpm - med);
-        if (errSecond < errBest) bestBpm = secondBpm;
-      }
-
+    const voted = estimateBpmFromIntervals(this.intervals, this.bpm);
+    if (voted != null) {
       const alpha = BPM_SMOOTH_ALPHA;
-      this.bpm = this.bpm * (1 - alpha) + bestBpm * alpha;
+      this.bpm = this.bpm * (1 - alpha) + voted * alpha;
       this.bpm = Math.max(BPM_MIN, Math.min(BPM_MAX, this.bpm));
     }
   }
 
   private updateConfidence(dtSeconds: number, rmsN: number) {
-    const nFactor = smoothstep(MIN_ONSETS, MIN_ONSETS + 4, this.intervals.length);
-    const period = 60 / this.bpm;
-
-    let totalErr = 0;
-    for (const ioi of this.intervals) {
-      let minErr = Infinity;
-      for (const k of [1, 2]) {
-        minErr = Math.min(minErr, Math.abs(ioi - k * period) / period);
-      }
-      totalErr += minErr;
-    }
-    const meanErr = totalErr / Math.max(1, this.intervals.length);
-    const consistency = 1 - clamp01(meanErr / 0.15);
-    const bpmStability = 1 - clamp01(Math.abs(this.bpm - this.prevBpm) / 8);
-    const energyGate = smoothstep(SILENCE_RMS_N, 0.25, rmsN);
-
     const elapsed =
       this.firstOnsetT > 0 ? performance.now() * 0.001 - this.firstOnsetT : 0;
-    const warmup = clamp01(elapsed / WARMUP_SEC);
-
-    const raw = nFactor * consistency * bpmStability * energyGate * warmup;
+    const raw = confidenceFromIntervals({
+      intervalCount: this.intervals.length,
+      intervals: this.intervals,
+      bpm: this.bpm,
+      prevBpm: this.prevBpm,
+      rmsN,
+      elapsedSec: elapsed,
+    });
     const alpha = 1 - Math.pow(1 - CONF_SMOOTH_ALPHA, Math.max(0.001, dtSeconds * 60));
     this.confidence = this.confidence * (1 - alpha) + raw * alpha;
     this.confidence = clamp01(this.confidence);

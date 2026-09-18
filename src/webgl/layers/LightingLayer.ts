@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../../look/types';
 import type { VJState } from '../StateManager';
 
 /** Max intensity for the center white flash (0–1 `lightningFlash` → Three.js units). */
@@ -35,12 +36,12 @@ export class LightingLayer {
     threeScene.add(this.centerFlash);
   }
 
-  update(_dtSeconds: number, features: AudioFeatures, state: VJState) {
+  update(_dtSeconds: number, features: AudioFeatures, state: VJState, axes: LookAxes = identityAxes()) {
     const flux = Math.max(0, features.spectralFlux);
     this.fluxPeak = Math.max(this.fluxPeak * 0.985, flux);
 
     const fluxN = flux / (this.fluxPeak + 1e-9);
-    const fluxBoost = Math.min(1.5, fluxN) * (0.45 + 0.85 * state.rave);
+    const fluxBoost = Math.min(1.5, fluxN) * (0.45 + 0.85 * state.rave * axes.intensity);
 
     this.dir.intensity = 0.2 + 2.5 * fluxBoost;
 

@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../../look/types';
 import type { VJState } from '../StateManager';
 
 export class Director {
@@ -48,10 +49,11 @@ export class Director {
       .to(this, { zDollyPunch: 0, duration: 0.2, ease: 'power3.inOut' });
   }
 
-  update(dtSeconds: number, features: AudioFeatures, state: VJState) {
+  update(dtSeconds: number, features: AudioFeatures, state: VJState, axes: LookAxes = identityAxes()) {
+    const rave = state.rave * axes.intensity;
     // State transitions
-    if (this.mode !== 'rave' && state.rave > 0.62) this.enterRave();
-    if (this.mode !== 'cinematic' && state.rave < 0.38) this.enterCinematic();
+    if (this.mode !== 'rave' && rave > 0.62) this.enterRave();
+    if (this.mode !== 'cinematic' && rave < 0.38) this.enterCinematic();
 
     // Kick detection based on spectralFlux normalization
     const flux = Math.max(0, features.spectralFlux);

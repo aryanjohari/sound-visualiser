@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { VideoCapture } from '../camera/VideoCapture';
 import type { AudioFeatures } from '../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../look/types';
 import type { VJState } from './StateManager';
 import { AcidFeedLayer } from './layers/AcidFeedLayer';
 import { AnchorLayer } from './layers/AnchorLayer';
@@ -32,6 +33,7 @@ export class VJScene {
   private readonly root = new THREE.Group();
   private initialised = false;
   private visualMode: VisualMode = 'cinematic';
+  private lookAxes: LookAxes = identityAxes();
   private modeChangeInFlight: Promise<void> | null = null;
 
   private postProcessing: PostProcessing | null = null;
@@ -69,6 +71,10 @@ export class VJScene {
 
   getVisualMode(): VisualMode {
     return this.visualMode;
+  }
+
+  setLookAxes(axes: LookAxes) {
+    this.lookAxes = { ...axes };
   }
 
   needsWebcam() {
@@ -141,20 +147,21 @@ export class VJScene {
   update(dtSeconds: number, _features: AudioFeatures, state: VJState) {
     if (!this.initialised) return;
 
-    this.root.rotation.y += dtSeconds * (0.03 + 0.22 * state.rave);
+    this.root.rotation.y += dtSeconds * (0.03 + 0.22 * state.rave * this.lookAxes.intensity);
     this.root.rotation.x = Math.sin(performance.now() * 0.00015) * 0.04;
 
     const features = _features;
-    this.director?.update(dtSeconds, features, state);
-    this.environmentLayers.update(dtSeconds, features, state);
-    this.anchorLayer.update(dtSeconds, features, state);
-    this.lightingLayer.update(dtSeconds, features, state);
-    this.postProcessing?.update(dtSeconds, features, state);
+    const axes = this.lookAxes;
+    this.director?.update(dtSeconds, features, state, axes);
+    this.environmentLayers.update(dtSeconds, features, state, axes);
+    this.anchorLayer.update(dtSeconds, features, state, axes);
+    this.lightingLayer.update(dtSeconds, features, state, axes);
+    this.postProcessing?.update(dtSeconds, features, state, axes);
 
     if (this.visualMode === 'live') {
-      this.liveFeedLayer.update(dtSeconds, features, state);
+      this.liveFeedLayer.update(dtSeconds, features, state, axes);
     } else if (this.visualMode === 'acid') {
-      this.acidFeedLayer.update(dtSeconds, features, state);
+      this.acidFeedLayer.update(dtSeconds, features, state, axes);
     }
   }
 

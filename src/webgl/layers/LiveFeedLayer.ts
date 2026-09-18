@@ -1,13 +1,11 @@
 import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../../look/types';
+import { blendSync } from '../blendSync';
 import type { VJState } from '../StateManager';
 
 import liveFeedVert from '../../shaders/liveFeed.vert.glsl?raw';
 import liveFeedFrag from '../../shaders/liveFeed.frag.glsl?raw';
-
-function blendSync(phase2a: number, beat: number, syncWeight: number) {
-  return phase2a + (beat - phase2a) * syncWeight;
-}
 
 export class LiveFeedLayer {
   private readonly liveScene = new THREE.Scene();
@@ -78,7 +76,7 @@ export class LiveFeedLayer {
     }
   }
 
-  update(dtSeconds: number, features: AudioFeatures, state: VJState) {
+  update(dtSeconds: number, features: AudioFeatures, state: VJState, axes: LookAxes = identityAxes()) {
     if (!this.material) return;
 
     const texture = this.material.uniforms.u_video.value as THREE.VideoTexture | null;
@@ -115,12 +113,12 @@ export class LiveFeedLayer {
     this.material.uniforms.u_mid.value = Math.min(1.4, midN);
     this.material.uniforms.u_high.value = Math.min(1.5, highN);
     this.material.uniforms.u_lightningFlash.value = state.lightningFlash;
-    this.material.uniforms.u_rave.value = state.rave;
+    this.material.uniforms.u_rave.value = state.rave * axes.intensity;
 
-    this.maybeTriggerGlitch(fluxN, state.beat);
+    this.maybeTriggerGlitch(fluxN, state.beat, axes.glitch);
   }
 
-  private maybeTriggerGlitch(fluxN: number, beat: VJState['beat']) {
+  private maybeTriggerGlitch(fluxN: number, beat: VJState['beat'], glitch: number) {
     if (!this.material) return;
 
     const now = performance.now() * 0.001;
@@ -142,8 +140,8 @@ export class LiveFeedLayer {
       this.lastGlitchT = now;
       this.glitchFramesLeft = 3;
       this.glitchOffset.set(
-        (Math.random() - 0.5) * 0.04,
-        (Math.random() - 0.5) * 0.03,
+        (Math.random() - 0.5) * 0.04 * glitch,
+        (Math.random() - 0.5) * 0.03 * glitch,
       );
     }
 

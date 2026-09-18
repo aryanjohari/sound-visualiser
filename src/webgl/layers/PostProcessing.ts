@@ -5,6 +5,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
 import chromaFrag from '../../shaders/chromaticAberration.frag.glsl?raw';
 import type { AudioFeatures } from '../../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../../look/types';
 import type { VJState } from '../StateManager';
 
 export class PostProcessing {
@@ -49,13 +50,13 @@ export class PostProcessing {
     this.composer.setSize(width, height);
   }
 
-  update(dtSeconds: number, features: AudioFeatures, state: VJState) {
+  update(dtSeconds: number, features: AudioFeatures, state: VJState, axes: LookAxes = identityAxes()) {
     const bass = Math.max(0, features.bass);
     this.bassPeak = Math.max(this.bassPeak * 0.985, bass);
     const bassN = bass / (this.bassPeak + 1e-9);
 
     // RGB split; ramp a touch in rave.
-    const uBass = Math.min(1.4, bassN) * (0.7 + 0.6 * state.rave);
+    const uBass = Math.min(1.4, bassN * axes.intensity) * (0.7 + 0.6 * state.rave * axes.intensity);
     this.chromaPass.uniforms.u_bass.value = uBass;
 
     void dtSeconds;

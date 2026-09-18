@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../../look/types';
 import type { VJState } from '../StateManager';
 
 import fluidVert from '../../shaders/fluidBackground.vert.glsl?raw';
@@ -36,19 +37,19 @@ export class EnvironmentLayers {
     threeScene.add(this.fluidMesh);
   }
 
-  update(dtSeconds: number, features: AudioFeatures, state: VJState) {
+  update(dtSeconds: number, features: AudioFeatures, state: VJState, axes: LookAxes = identityAxes()) {
     const bass = Math.max(0, features.bass);
 
     this.bassPeak = Math.max(this.bassPeak * 0.985, bass);
 
     const bassN = bass / (this.bassPeak + 1e-9);
 
-    const uBass = Math.min(1.5, bassN);
+    const uBass = Math.min(1.5, bassN * axes.intensity);
 
     if (this.fluidMat) {
       this.fluidMat.uniforms.u_time.value += dtSeconds;
       this.fluidMat.uniforms.u_bass.value = uBass;
-      this.fluidMat.uniforms.u_high.value = Math.min(1.0, state.thresholdedHigh);
+      this.fluidMat.uniforms.u_high.value = Math.min(1.0, state.thresholdedHigh * axes.intensity);
     }
   }
 }

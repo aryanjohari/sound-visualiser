@@ -16,6 +16,8 @@ export type AudioEngineOptions = {
   onFeatures?: (features: AudioFeatures) => void;
   /** Fires when mic/file playback becomes active or after file/mic fully stops (including natural track end). */
   onPlaybackStateChange?: (playing: boolean) => void;
+  /** Fires before source/context teardown so capture can disconnect its tap. */
+  onBeforeTeardown?: () => void;
 };
 
 type AudioSourceMode = 'mic' | 'file';
@@ -62,6 +64,7 @@ export class AudioEngine {
   private readonly hopSize: number;
   private readonly onFeatures?: (features: AudioFeatures) => void;
   private readonly onPlaybackStateChange?: (playing: boolean) => void;
+  private readonly onBeforeTeardown?: () => void;
 
   private latest: AudioFeatures = { ...DEFAULT_FEATURES };
 
@@ -70,6 +73,17 @@ export class AudioEngine {
     this.hopSize = options.hopSize ?? 256;
     this.onFeatures = options.onFeatures;
     this.onPlaybackStateChange = options.onPlaybackStateChange;
+    this.onBeforeTeardown = options.onBeforeTeardown;
+  }
+
+  /** Shared context for Keep tap. Do not close because recording ended. */
+  getAudioContext() {
+    return this.audioContext;
+  }
+
+  /** Current mic/file source for `createMediaStreamDestination` fan-out. `powerSpectrum` stays in this file. */
+  getCurrentSource() {
+    return this.sourceNode;
   }
 
   private notifyPlayback(playing: boolean) {
@@ -150,6 +164,7 @@ export class AudioEngine {
   }
 
   private async teardown() {
+    this.onBeforeTeardown?.();
     this.mode = null;
 
     if (this.element && this.onElementEnded) {

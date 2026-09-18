@@ -14,9 +14,10 @@ English; IDs are stable kebab-case for portfolio zoom tooling.
 There is no C4 **Code** level (no class diagrams). Narrative case study:
 [`../ARCHITECTURE.md`](../ARCHITECTURE.md). Tuning/reference: [`../PROJECT.md`](../PROJECT.md).
 
-**Zoom:** Context system box → Containers → (optional) Component diagram for
-`audio-engine`, `interpretation`, or `vj-scene`. Machine index:
-[`portfolio-map.json`](./portfolio-map.json).
+**Zoom:** Context system box → Containers (includes look document and Keep) →
+(optional) Component diagram for `audio-engine`, `interpretation`, or `vj-scene`.
+Machine index: [`portfolio-map.json`](./portfolio-map.json). No C3 for
+`look-document` or `keep` — C2 + source paths suffice.
 
 ## Component zooms (C3)
 
@@ -26,8 +27,9 @@ There is no C4 **Code** level (no class diagrams). Narrative case study:
 | `interpretation` | [`3-components/interpretation.mmd`](./3-components/interpretation.mmd) |
 | `vj-scene` | [`3-components/vj-scene.mmd`](./3-components/vj-scene.mmd) |
 
-Containers without a C3 file (`glass-ui`, `demo-asset`, `feature-snapshot`, `render-loop`,
-`video-capture`, `webgl-canvas`) are thin enough that C2 + source paths suffice.
+Containers without a C3 file (`glass-ui`, `demo-asset`, `feature-snapshot`, `look-document`,
+`render-loop`, `video-capture`, `webgl-canvas`, `keep`) are thin enough that C2 + source
+paths suffice. Talk is not a container (deferred; no LLM host).
 
 ## Portfolio fetch
 

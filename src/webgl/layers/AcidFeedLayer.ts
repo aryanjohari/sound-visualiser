@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import type { AudioFeatures } from '../../audio/AudioEngine';
+import { identityAxes, type LookAxes } from '../../look/types';
+import { blendSync } from '../blendSync';
 import type { VJState } from '../StateManager';
 
 import liveFeedVert from '../../shaders/liveFeed.vert.glsl?raw';
@@ -35,10 +37,6 @@ function clamp01(v: number) {
 
 function blendMood(calm: number, groove: number, intense: number, w: VJState['moodWeights']) {
   return w.calm * calm + w.groove * groove + w.intense * intense;
-}
-
-function blendSync(phase2a: number, beat: number, syncWeight: number) {
-  return phase2a + (beat - phase2a) * syncWeight;
 }
 
 // Beat-sync tuning (Phase 2b)
@@ -212,7 +210,7 @@ export class AcidFeedLayer {
     this.ensureFbos(renderer, width, height);
   }
 
-  update(dtSeconds: number, features: AudioFeatures, state: VJState) {
+  update(dtSeconds: number, features: AudioFeatures, state: VJState, axes: LookAxes = identityAxes()) {
     if (!this.processMaterial) return;
 
     const texture = this.processMaterial.uniforms.u_video.value as THREE.VideoTexture | null;
@@ -240,14 +238,14 @@ export class AcidFeedLayer {
     const beat = state.beat;
     const syncWeight = beat.syncActive ? beat.confidence : 0;
 
-    const baseFeedback = blendMood(0.15, 0.32, 0.52, w);
-    const phase2aFeedback = clamp01(baseFeedback + bassN * 0.04 + state.rave * 0.02);
+    const baseFeedback = blendMood(0.15, 0.32, 0.52, w) * axes.feedback;
+    const phase2aFeedback = clamp01(baseFeedback + bassN * 0.04 + state.rave * 0.02 * axes.intensity);
 
     let beatFeedback = phase2aFeedback + BEAT_FB_DECAY * Math.exp(-beat.beatPhase * 4);
     if (beat.onBeat) beatFeedback += BEAT_FB_PULSE;
     const feedbackAmount = blendSync(phase2aFeedback, beatFeedback, syncWeight);
 
-    const kaleidoBase = blendMood(1, 3.5, 6.5, w);
+    const kaleidoBase = blendMood(1, 3.5, 6.5, w) * axes.fold;
     const phase2aKaleido = Math.min(8, Math.max(1, Math.round(kaleidoBase)));
     const barStep = Math.floor(beat.barPhase * 4) / 3;
     const beatKaleido = Math.min(
@@ -258,21 +256,21 @@ export class AcidFeedLayer {
       blendSync(phase2aKaleido, beatKaleido, syncWeight),
     );
 
-    const hueBase = blendMood(0.02, 0.12, 0.35, w);
+    const hueBase = blendMood(0.02, 0.12, 0.35, w) * axes.hue;
     const hueCycleSpeed = hueBase * (1 + highN * 0.25);
     this.huePhaseAccum += dtSeconds * hueCycleSpeed;
     const beatHue = beat.beatIndex * BEAT_HUE_STEP;
     const huePhase = blendSync(this.huePhaseAccum, beatHue, syncWeight);
 
-    const meltZoomScale = blendMood(1, 1, 1.22, w) + bassN * 0.04;
-    const glitchStrength = blendMood(0.55, 1.0, 1.0, w);
+    const meltZoomScale = (blendMood(1, 1, 1.22, w) + bassN * 0.04) * axes.melt;
+    const glitchStrength = blendMood(0.55, 1.0, 1.0, w) * axes.glitch;
 
     this.processMaterial.uniforms.u_time.value += dtSeconds;
     this.processMaterial.uniforms.u_bass.value = Math.min(1.4, bassN);
     this.processMaterial.uniforms.u_mid.value = Math.min(1.4, midN);
     this.processMaterial.uniforms.u_high.value = Math.min(1.5, highN);
     this.processMaterial.uniforms.u_lightningFlash.value = state.lightningFlash;
-    this.processMaterial.uniforms.u_rave.value = state.rave;
+    this.processMaterial.uniforms.u_rave.value = state.rave * axes.intensity;
     this.processMaterial.uniforms.u_feedbackAmount.value = Math.min(0.62, feedbackAmount);
     this.processMaterial.uniforms.u_kaleidoscopeSegments.value = kaleidoscopeSegments;
     this.processMaterial.uniforms.u_huePhase.value = huePhase;

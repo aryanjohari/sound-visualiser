@@ -1,15 +1,14 @@
 title: Sound Visualiser
-summary: Turns music, your microphone, or your webcam into live 3D visuals that follow the beat in the browser.
+summary: Browser look instrument — live WebGL follows the beat; looks are reloadable JSON; Keep saves a 30s local clip of the canvas plus soundtrack.
 description: >
-  Sound Visualiser is a browser-based VJ rig. Play a track, talk into your microphone,
-  or point your webcam at the room, and the whole screen becomes a reactive light show.
-  Rather than just bouncing bars to the volume, it works out whether the music feels
-  calm, groovy or intense, and tries to lock onto the tempo — when it is confident it
-  has found the beat, the visuals step and pulse in time instead of jittering. Three
-  looks are built in: a cinematic 3D scene, a sharp reactive webcam feed, and an "acid"
-  mode that feeds every rendered frame back into the next to grow psychedelic trails.
-  Nothing is uploaded or recorded; the audio, the video and the rendering all stay on
-  your own machine.
+  Sound Visualiser is a browser-only look instrument. Play a track (file, microphone, or
+  demo), optionally add a webcam, and a full-screen WebGL look follows energy, mood, and
+  beat-with-confidence. Three looks are built in: a cinematic 3D scene, a sharp reactive
+  webcam feed, and an acid mode that feeds each frame back into the next. The look is a
+  closed JSON document (schemaVersion 1: look, sync, and axes) you can download and reload
+  on a new track. Keep records up to 30 seconds of the canvas plus soundtrack in the tab
+  (the HUD stays out of the pixels); silent clips fail closed, and nothing is uploaded.
+  There is no backend and no talk API on this wrap.
 stack:
   - TypeScript
   - Vite

@@ -21,8 +21,10 @@ body {
   inset: 0;
   z-index: 10;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   padding: 24px;
   box-sizing: border-box;
   pointer-events: auto;
@@ -33,7 +35,6 @@ body {
   line-height: 1.45;
 
   transition:
-    opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1),
     filter 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -48,16 +49,33 @@ body {
   pointer-events: auto;
 }
 
-/* Recessed: clicks must reach the canvas — disable hit-testing on shell and every descendant */
+/* Recessed: clicks must reach the canvas except the Keep dock */
 .glass-shell.glass-shell--recessed {
-  opacity: 0;
   pointer-events: none;
-  filter: blur(2px);
+  filter: none;
 }
 
 .glass-shell.glass-shell--recessed::before,
-.glass-shell.glass-shell--recessed * {
+.glass-shell.glass-shell--recessed .glass-panel,
+.glass-shell.glass-shell--recessed .glass-panel * {
   pointer-events: none;
+}
+
+.glass-shell.glass-shell--recessed .glass-panel {
+  display: none;
+}
+
+.glass-shell.glass-shell--recessed {
+  justify-content: flex-end;
+}
+
+.glass-shell.glass-shell--recessed::before {
+  opacity: 0;
+}
+
+.glass-shell.glass-shell--recessed .keep-dock,
+.glass-shell.glass-shell--recessed .keep-dock * {
+  pointer-events: auto;
 }
 
 /* —— Hidden top-right stop (only hit-testable while audio is playing; see .hover-stop-host--active) —— */
@@ -116,6 +134,8 @@ body {
   pointer-events: auto;
   width: 100%;
   max-width: min(420px, calc(100vw - 32px));
+  max-height: min(92vh, 900px);
+  overflow: auto;
   padding: 22px 24px 20px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -254,4 +274,66 @@ input[type='file']::file-selector-button {
   min-width: 0;
   font-size: 12px;
   opacity: 0.72;
+}
+
+.axis-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.axis-row:last-child {
+  margin-bottom: 0;
+}
+
+.axis-row label {
+  flex: 0 0 78px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.axis-row input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: rgba(120, 160, 255, 0.9);
+}
+
+.axis-val {
+  flex: 0 0 36px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+  text-align: right;
+}
+
+.file-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.keep-dock {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 12, 18, 0.55);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}
+
+.keep-dock #keepHint {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.glass-shell--keeping .keep-dock {
+  border-color: rgba(120, 160, 255, 0.45);
 }
