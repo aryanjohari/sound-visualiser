@@ -15,6 +15,197 @@ body {
   display: block;
 }
 
+/* —— Visitor intro (first paint; sibling overlay above the glass shell) —— */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  overflow: auto;
+  pointer-events: auto;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 45%,
+    rgba(4, 4, 10, 0.22) 0%,
+    rgba(4, 4, 10, 0.52) 100%
+  );
+}
+
+.intro-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 36px 32px 28px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 12, 18, 0.45);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.intro-anim {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-anim {
+    opacity: 1;
+  }
+}
+
+.intro-kicker {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.intro-title {
+  margin: 0 0 14px;
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.intro-body {
+  margin: 0 0 22px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.intro-how {
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  counter-reset: intro-step;
+}
+
+.intro-how li {
+  position: relative;
+  margin: 0 0 10px;
+  padding-left: 28px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.58);
+  counter-increment: intro-step;
+}
+
+.intro-how li:last-child {
+  margin-bottom: 0;
+}
+
+.intro-how li::before {
+  content: counter(intro-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.intro-how kbd {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font: inherit;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.intro-play {
+  display: block;
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(120, 160, 255, 0.55);
+  background: rgba(120, 160, 255, 0.28);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.intro-play:hover {
+  background: rgba(120, 160, 255, 0.38);
+  border-color: rgba(120, 160, 255, 0.7);
+}
+
+.intro-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 170, 170, 0.9);
+}
+
+.intro-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.intro-text-btn {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+}
+
+.intro-text-btn:hover {
+  background: transparent;
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.intro-text-btn:active {
+  transform: none;
+}
+
+.intro-github {
+  display: block;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  text-decoration: none;
+}
+
+.intro-github:hover {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.intro-github:focus-visible {
+  outline: 2px solid rgba(120, 160, 255, 0.55);
+  outline-offset: 4px;
+}
+
 /* —— Glass overlay shell (full-viewport layer over canvas + toggles fade) —— */
 .glass-shell {
   position: fixed;
@@ -47,35 +238,62 @@ body {
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
   pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Recessed: clicks must reach the canvas except the Keep dock */
+body[data-ui-mode='lab'] .glass-shell::before {
+  opacity: 1;
+}
+
+body[data-ui-mode='intro'] .glass-shell,
+body[data-ui-mode='playing'] .glass-shell {
+  pointer-events: none;
+}
+
+body[data-ui-mode='compact'] .glass-shell {
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+body[data-ui-mode='lab'] .glass-shell {
+  pointer-events: auto;
+}
+
+/* Recessed: clicks must reach the canvas */
 .glass-shell.glass-shell--recessed {
   pointer-events: none;
   filter: none;
+  justify-content: flex-end;
 }
 
 .glass-shell.glass-shell--recessed::before,
 .glass-shell.glass-shell--recessed .glass-panel,
-.glass-shell.glass-shell--recessed .glass-panel * {
+.glass-shell.glass-shell--recessed .glass-panel *,
+.glass-shell.glass-shell--recessed .compact-dock,
+.glass-shell.glass-shell--recessed .compact-dock *,
+.glass-shell.glass-shell--recessed .keep-dock,
+.glass-shell.glass-shell--recessed .keep-dock * {
   pointer-events: none;
 }
 
-.glass-shell.glass-shell--recessed .glass-panel {
+.glass-shell.glass-shell--recessed .glass-panel,
+.glass-shell.glass-shell--recessed .compact-dock,
+.glass-shell.glass-shell--recessed .keep-dock {
   display: none;
 }
 
-.glass-shell.glass-shell--recessed {
-  justify-content: flex-end;
+.glass-shell.glass-shell--recessed.glass-shell--keeping .keep-dock {
+  display: flex;
+  pointer-events: auto;
+}
+
+.glass-shell.glass-shell--recessed.glass-shell--keeping .keep-dock * {
+  pointer-events: auto;
 }
 
 .glass-shell.glass-shell--recessed::before {
   opacity: 0;
-}
-
-.glass-shell.glass-shell--recessed .keep-dock,
-.glass-shell.glass-shell--recessed .keep-dock * {
-  pointer-events: auto;
 }
 
 /* —— Hidden top-right stop (only hit-testable while audio is playing; see .hover-stop-host--active) —— */
@@ -131,6 +349,7 @@ body {
 .glass-panel {
   position: relative;
   z-index: 1;
+  display: none;
   pointer-events: auto;
   width: 100%;
   max-width: min(420px, calc(100vw - 32px));
@@ -145,6 +364,27 @@ body {
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.35) inset,
     0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+body[data-ui-mode='lab'] .glass-panel {
+  display: block;
+}
+
+.glass-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.glass-panel-head .glass-title {
+  margin: 0;
+}
+
+.lab-close {
+  padding: 8px 12px;
+  font-size: 13px;
 }
 
 .glass-title {
@@ -269,7 +509,7 @@ input[type='file']::file-selector-button {
   color: rgba(255, 255, 255, 0.9);
 }
 
-#status {
+.js-status {
   flex: 1;
   min-width: 0;
   font-size: 12px;
@@ -318,7 +558,7 @@ input[type='file']::file-selector-button {
 .keep-dock {
   position: relative;
   z-index: 1;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -329,6 +569,10 @@ input[type='file']::file-selector-button {
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
 }
 
+body[data-ui-mode='lab'] .keep-dock {
+  display: flex;
+}
+
 .keep-dock #keepHint {
   font-size: 12px;
   opacity: 0.7;
@@ -336,4 +580,124 @@ input[type='file']::file-selector-button {
 
 .glass-shell--keeping .keep-dock {
   border-color: rgba(120, 160, 255, 0.45);
+}
+
+/* —— Compact dock (after the visitor has entered; hidden on intro / playing / lab) —— */
+.compact-dock {
+  position: relative;
+  z-index: 1;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: min(720px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 12, 18, 0.55);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+body[data-ui-mode='compact'] .compact-dock {
+  display: flex;
+}
+
+.compact-play {
+  border-color: rgba(120, 160, 255, 0.45);
+  background: rgba(120, 160, 255, 0.22);
+  color: #fff;
+}
+
+.compact-play:hover {
+  background: rgba(120, 160, 255, 0.32);
+  border-color: rgba(120, 160, 255, 0.6);
+}
+
+.compact-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-looks {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.compact-looks .mode-btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 10px;
+  font-size: 13px;
+}
+
+.compact-file-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.compact-file-label:hover {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.compact-file-label input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.compact-dock .js-status {
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .intro {
+    padding: 24px;
+    align-items: flex-end;
+    padding-bottom: 32px;
+  }
+
+  .intro-card {
+    padding: 28px 22px 22px;
+  }
+
+  .intro-title {
+    font-size: 32px;
+  }
+
+  .intro-play {
+    padding: 16px 18px;
+    font-size: 16px;
+  }
+
+  .compact-dock {
+    max-width: calc(100vw - 24px);
+  }
+
+  .compact-looks {
+    flex-basis: 100%;
+  }
 }

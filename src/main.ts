@@ -1,4 +1,5 @@
 import './styles.css';
+import gsap from 'gsap';
 import * as THREE from 'three';
 import { AudioEngine, type AudioFeatures } from './audio/AudioEngine';
 import { VideoCaptureError } from './camera/VideoCapture';
@@ -15,17 +16,29 @@ import { Loop } from './webgl/Loop';
 import { StateManager, type BeatState } from './webgl/StateManager';
 import { VJScene } from './webgl/Scene';
 
+type UiMode = 'intro' | 'playing' | 'compact' | 'lab';
+
 const canvasEl = document.getElementById('webgl') as HTMLCanvasElement | null;
 const uiEl = document.getElementById('ui') as HTMLDivElement | null;
 const hoverStopHost = document.getElementById('hoverStopHost') as HTMLDivElement | null;
 const hoverStopBtn = document.getElementById('hoverStopBtn') as HTMLButtonElement | null;
+const introEl = document.getElementById('intro') as HTMLElement | null;
+const introPlayBtn = document.getElementById('introPlayBtn') as HTMLButtonElement | null;
+const introMicBtn = document.getElementById('introMicBtn') as HTMLButtonElement | null;
+const introLabBtn = document.getElementById('introLabBtn') as HTMLButtonElement | null;
+const introError = document.getElementById('introError') as HTMLParagraphElement | null;
 
 if (!canvasEl) throw new Error('Missing canvas #webgl');
 if (!uiEl) throw new Error('Missing #ui container');
 if (!hoverStopHost || !hoverStopBtn) throw new Error('Missing hover stop controls');
+if (!introEl || !introPlayBtn || !introMicBtn || !introLabBtn || !introError) {
+  throw new Error('Missing intro controls');
+}
 
 const canvas = canvasEl;
 const ui = uiEl;
+const intro = introEl;
+const introErrorEl = introError;
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -40,16 +53,100 @@ const scene = new VJScene(renderer);
 let audioPlaying = false;
 let lastStatusBase = '';
 let lastBeatState: BeatState | null = null;
+let uiMode: UiMode = 'intro';
+let introDismissing = false;
 
 const keep = new KeepCapture();
+
+function setUiMode(mode: UiMode) {
+  uiMode = mode;
+  document.body.dataset.uiMode = mode;
+  ui.dataset.uiMode = mode;
+  ui.classList.toggle('glass-shell--recessed', mode === 'playing');
+  const panel = ui.querySelector('.glass-panel') as HTMLElement | null;
+  const compact = ui.querySelector('.compact-dock') as HTMLElement | null;
+  const keepDock = ui.querySelector('.keep-dock') as HTMLElement | null;
+  if (panel) panel.hidden = mode !== 'lab';
+  if (compact) compact.hidden = mode !== 'compact';
+  if (keepDock) {
+    keepDock.hidden = !(mode === 'lab' || (mode === 'playing' && keep.isRecording()));
+  }
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function playIntroEntrance() {
+  const items = intro.querySelectorAll('.intro-anim');
+  gsap.killTweensOf(items);
+  if (prefersReducedMotion()) {
+    gsap.set(items, { autoAlpha: 1, y: 0 });
+    return;
+  }
+  gsap.fromTo(
+    items,
+    { autoAlpha: 0, y: 16 },
+    {
+      autoAlpha: 1,
+      y: 0,
+      duration: 0.55,
+      stagger: 0.07,
+      ease: 'power2.out',
+    },
+  );
+}
+
+function dismissIntro(onDone: () => void) {
+  if (intro.hidden || introDismissing) {
+    onDone();
+    return;
+  }
+  introDismissing = true;
+  intro.style.pointerEvents = 'none';
+  gsap.killTweensOf(intro);
+  gsap.killTweensOf(intro.querySelectorAll('.intro-anim'));
+  gsap.to(intro, {
+    autoAlpha: 0,
+    duration: prefersReducedMotion() ? 0 : 0.45,
+    ease: 'power2.inOut',
+    onComplete: () => {
+      intro.hidden = true;
+      intro.setAttribute('aria-hidden', 'true');
+      onDone();
+    },
+  });
+}
+
+function leaveIntro(next: UiMode) {
+  if (uiMode !== 'intro') {
+    setUiMode(next);
+    return;
+  }
+  if (next === 'playing') {
+    setUiMode('playing');
+    dismissIntro(() => {});
+    return;
+  }
+  dismissIntro(() => {
+    setUiMode(next);
+    if (next === 'lab') document.getElementById('labCloseBtn')?.focus();
+  });
+}
 
 const audioEngine = new AudioEngine({
   onPlaybackStateChange(playing) {
     audioPlaying = playing;
-    ui.classList.toggle('glass-shell--recessed', playing);
     hoverStopHost.classList.toggle('hover-stop-host--active', playing);
     hoverStopHost.setAttribute('aria-hidden', playing ? 'false' : 'true');
-    if (!playing) setStatusIdle();
+    if (playing) {
+      setIntroError(null);
+      if (uiMode === 'intro') leaveIntro('playing');
+      else setUiMode('playing');
+    } else if (uiMode !== 'intro') {
+      setUiMode('compact');
+      setStatusIdle();
+    }
   },
   onBeforeTeardown() {
     keep.abortForSourceTeardown();
@@ -80,17 +177,30 @@ function resize() {
 scene.init({ width: window.innerWidth, height: window.innerHeight });
 resize();
 loop.start();
+playIntroEntrance();
+introPlayBtn.focus();
 
 window.addEventListener('resize', resize);
 
 function setStatus(text: string) {
-  const el = document.getElementById('status');
-  if (el) el.textContent = text;
+  for (const el of document.querySelectorAll('.js-status')) {
+    el.textContent = text;
+  }
 }
 
 function setStatusIdle() {
   lastStatusBase = 'Choose a demo track, microphone, or a local file.';
   setStatus(lastStatusBase);
+}
+
+function setIntroError(msg: string | null) {
+  if (msg) {
+    introErrorEl.hidden = false;
+    introErrorEl.textContent = msg;
+  } else {
+    introErrorEl.hidden = true;
+    introErrorEl.textContent = '';
+  }
 }
 
 function modeLabel(mode: LookId) {
@@ -132,7 +242,10 @@ function downloadLookJson(doc: LookDocument) {
 
 ui.innerHTML = `
   <div class="glass-panel">
-    <h1 class="glass-title">Sound Visualiser</h1>
+    <div class="glass-panel-head">
+      <h1 class="glass-title">Lab</h1>
+      <button type="button" id="labCloseBtn" class="lab-close">Close</button>
+    </div>
     <section class="glass-section" aria-labelledby="demo-heading">
       <h2 id="demo-heading">Demo Tracks</h2>
       <div class="glass-row">
@@ -214,24 +327,43 @@ ui.innerHTML = `
     </section>
     <div class="glass-footer">
       <button type="button" id="stopBtn">Stop</button>
-      <div id="status">Choose a demo track, microphone, or a local file.</div>
+      <div id="status" class="js-status">Choose a demo track, microphone, or a local file.</div>
     </div>
   </div>
   <div class="keep-dock">
     <button type="button" id="keepBtn">Start Keep</button>
     <span id="keepHint">30s canvas + audio</span>
   </div>
+  <div class="compact-dock">
+    <div class="compact-row">
+      <button type="button" id="compactPlayBtn" class="compact-play">Play demo</button>
+      <button type="button" id="compactMicBtn">Microphone</button>
+      <label class="compact-file-label">
+        File
+        <input id="compactFile" type="file" accept="audio/*" />
+      </label>
+      <div class="compact-looks" role="group" aria-label="Look">
+        <button type="button" id="compactModeCinematic" class="mode-btn" data-mode="cinematic">Cinematic</button>
+        <button type="button" id="compactModeLive" class="mode-btn" data-mode="live">Live</button>
+        <button type="button" id="compactModeAcid" class="mode-btn" data-mode="acid">Acid</button>
+      </div>
+      <button type="button" id="compactLabBtn">Lab</button>
+    </div>
+    <div id="compactStatus" class="js-status">Choose a demo track, microphone, or a local file.</div>
+  </div>
 `;
 
 const demoFreeTibet = document.getElementById('demoFreeTibet') as HTMLButtonElement;
 const demoHuzur = document.getElementById('demoHuzur') as HTMLButtonElement;
 const localFile = document.getElementById('localFile') as HTMLInputElement;
+const compactFile = document.getElementById('compactFile') as HTMLInputElement;
 const stopBtn = document.getElementById('stopBtn') as HTMLButtonElement;
 const micBtn = document.getElementById('micBtn') as HTMLButtonElement;
-const modeCinematic = document.getElementById('modeCinematic') as HTMLButtonElement;
-const modeLive = document.getElementById('modeLive') as HTMLButtonElement;
-const modeAcid = document.getElementById('modeAcid') as HTMLButtonElement;
-const modeButtons = [modeCinematic, modeLive, modeAcid];
+const compactPlayBtn = document.getElementById('compactPlayBtn') as HTMLButtonElement;
+const compactMicBtn = document.getElementById('compactMicBtn') as HTMLButtonElement;
+const compactLabBtn = document.getElementById('compactLabBtn') as HTMLButtonElement;
+const labCloseBtn = document.getElementById('labCloseBtn') as HTMLButtonElement;
+const modeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-mode]'));
 const syncAuto = document.getElementById('syncAuto') as HTMLButtonElement;
 const syncOff = document.getElementById('syncOff') as HTMLButtonElement;
 const syncButtons = [syncAuto, syncOff];
@@ -242,6 +374,29 @@ const downloadLookBtn = document.getElementById('downloadLookBtn') as HTMLButton
 const loadLookFile = document.getElementById('loadLookFile') as HTMLInputElement;
 const keepBtn = document.getElementById('keepBtn') as HTMLButtonElement;
 const keepHint = document.getElementById('keepHint') as HTMLSpanElement;
+
+if (
+  !demoFreeTibet ||
+  !demoHuzur ||
+  !localFile ||
+  !compactFile ||
+  !stopBtn ||
+  !micBtn ||
+  !compactPlayBtn ||
+  !compactMicBtn ||
+  !compactLabBtn ||
+  !labCloseBtn ||
+  !syncAuto ||
+  !syncOff ||
+  !axisGlitchWrap ||
+  !axisAcidWrap ||
+  !downloadLookBtn ||
+  !loadLookFile ||
+  !keepBtn ||
+  !keepHint
+) {
+  throw new Error('Missing lab or compact controls');
+}
 
 function syncUiFromDocument() {
   const doc = look.getDocument();
@@ -324,6 +479,10 @@ function updateKeepButton() {
   keepBtn.classList.toggle('mode-btn--active', recording);
   keepHint.textContent = recording ? 'Recording… 30s cap' : '30s canvas + audio';
   ui.classList.toggle('glass-shell--keeping', recording);
+  const keepDock = ui.querySelector('.keep-dock') as HTMLElement | null;
+  if (keepDock) {
+    keepDock.hidden = !(uiMode === 'lab' || (uiMode === 'playing' && recording));
+  }
 }
 
 async function toggleKeep() {
@@ -416,6 +575,7 @@ loop.setOnStateUpdate((state) => {
 syncUiFromDocument();
 updateModeStatus('calm');
 updateKeepButton();
+setUiMode('intro');
 
 window.addEventListener('beforeunload', () => {
   if (keep.isRecording()) {
@@ -426,13 +586,46 @@ window.addEventListener('beforeunload', () => {
 
 async function playDemo(path: string, label: string) {
   try {
+    setIntroError(null);
     setStatus(`Loading ${label}…`);
     await audioEngine.startUrl(path);
     setStatus(`Playing ${label}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     setStatus(`Error: ${msg}`);
+    if (uiMode === 'intro') setIntroError(msg);
   }
+}
+
+async function startMic() {
+  try {
+    setIntroError(null);
+    setStatus('Starting microphone…');
+    await audioEngine.startMicrophone();
+    setStatus('Microphone live');
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    setStatus(`Error: ${msg}`);
+    if (uiMode === 'intro') setIntroError(msg);
+  }
+}
+
+async function playLocalFile(file: File) {
+  try {
+    setStatus(`Loading ${file.name}…`);
+    await audioEngine.startFile(file);
+    setStatus(`Playing ${file.name}`);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    setStatus(`Error: ${msg}`);
+  }
+}
+
+function onLocalFileChange(input: HTMLInputElement) {
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  void playLocalFile(file);
 }
 
 demoFreeTibet.addEventListener('click', () => {
@@ -443,33 +636,45 @@ demoHuzur.addEventListener('click', () => {
   void playDemo('/huzur.mp3', 'Huzur');
 });
 
+compactPlayBtn.addEventListener('click', () => {
+  void playDemo('/freetibet.mp3', 'Free Tibet');
+});
+
+introPlayBtn.addEventListener('click', () => {
+  void playDemo('/freetibet.mp3', 'Free Tibet');
+});
+
 localFile.addEventListener('change', () => {
-  const file = localFile.files?.[0];
-  if (!file) return;
-  void (async () => {
-    try {
-      setStatus(`Loading ${file.name}…`);
-      await audioEngine.startFile(file);
-      setStatus(`Playing ${file.name}`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setStatus(`Error: ${msg}`);
-    }
-  })();
-  localFile.value = '';
+  onLocalFileChange(localFile);
+});
+
+compactFile.addEventListener('change', () => {
+  onLocalFileChange(compactFile);
 });
 
 micBtn.addEventListener('click', () => {
-  void (async () => {
-    try {
-      setStatus('Starting microphone…');
-      await audioEngine.startMicrophone();
-      setStatus('Microphone live');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setStatus(`Error: ${msg}`);
-    }
-  })();
+  void startMic();
+});
+
+compactMicBtn.addEventListener('click', () => {
+  void startMic();
+});
+
+introMicBtn.addEventListener('click', () => {
+  void startMic();
+});
+
+introLabBtn.addEventListener('click', () => {
+  leaveIntro('lab');
+});
+
+compactLabBtn.addEventListener('click', () => {
+  setUiMode('lab');
+  labCloseBtn.focus();
+});
+
+labCloseBtn.addEventListener('click', () => {
+  setUiMode('compact');
 });
 
 stopBtn.addEventListener('click', () => {
@@ -481,7 +686,11 @@ hoverStopBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') void audioEngine.stop();
+  if (e.key === 'Escape') {
+    if (audioPlaying) void audioEngine.stop();
+    else if (uiMode === 'lab') setUiMode('compact');
+    return;
+  }
 
   const target = e.target as HTMLElement | null;
   if (target?.tagName === 'INPUT') return;

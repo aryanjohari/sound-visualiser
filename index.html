@@ -4,14 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sound Visualiser</title>
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
-  <body>
+  <body data-ui-mode="intro">
     <canvas id="webgl"></canvas>
-    <div id="ui" class="glass-shell"></div>
+    <main id="intro" class="intro">
+      <div class="intro-card">
+        <p class="intro-kicker intro-anim">Browser look instrument</p>
+        <h1 class="intro-title intro-anim">Sound Visualiser</h1>
+        <p class="intro-body intro-anim">
+          Play a track and a full-screen WebGL scene follows the music — energy, mood, and
+          beat. Nothing leaves the browser.
+        </p>
+        <ol class="intro-how intro-anim">
+          <li>Press Play demo, or use a file / the microphone.</li>
+          <li>The look follows the track. Keys <kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd> change Cinematic, Live, Acid.</li>
+          <li>Hover the top-right corner, or press Esc, to stop.</li>
+        </ol>
+        <button type="button" id="introPlayBtn" class="intro-play intro-anim">Play demo</button>
+        <p id="introError" class="intro-error" role="status" hidden></p>
+        <p class="intro-secondary intro-anim">
+          <button type="button" id="introMicBtn" class="intro-text-btn">Use microphone</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" id="introLabBtn" class="intro-text-btn">Open lab</button>
+        </p>
+        <a
+          class="intro-github intro-anim"
+          href="https://github.com/aryanjohari/sound-visualiser"
+          target="_blank"
+          rel="noopener noreferrer"
+          >GitHub</a
+        >
+      </div>
+    </main>
+    <div id="ui" class="glass-shell" data-ui-mode="intro"></div>
     <div id="hoverStopHost" class="hover-stop-host" aria-hidden="true">
       <button type="button" id="hoverStopBtn" class="hover-stop-btn" aria-label="Stop playback">×</button>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
-
