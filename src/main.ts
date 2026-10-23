@@ -710,7 +710,6 @@ function debugTick(dt: number) {
   if (debugT > 0.75) {
     debugT = 0;
     const f = audioEngine.getFeatures() satisfies AudioFeatures;
-    // eslint-disable-next-line no-console
     console.log('[audio]', {
       rms: f.rms.toFixed(4),
       flux: f.spectralFlux.toFixed(4),
