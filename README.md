@@ -135,7 +135,7 @@ src/
 
 ## License
 
-ISC (per `package.json`).
+ISC — see [`LICENSE`](LICENSE).
 
 ---
 
