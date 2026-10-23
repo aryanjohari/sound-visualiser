@@ -74,9 +74,8 @@ Behaviour is tuned through named constants in source. The most useful entry poin
 
 ### Demo tracks
 
-`public/freetibet.mp3` ships with the repo and is served at `/freetibet.mp3`. The second
-demo button requests `/huzur.mp3`, which is **not** included — that button will show a load
-error until you drop your own file at `public/huzur.mp3`.
+`public/freetibet.mp3` ships with the repo and is served at `/freetibet.mp3`. It is the only
+bundled demo track.
 
 ## Tests and CI
 

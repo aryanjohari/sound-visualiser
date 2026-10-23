@@ -250,7 +250,6 @@ ui.innerHTML = `
       <h2 id="demo-heading">Demo Tracks</h2>
       <div class="glass-row">
         <button type="button" id="demoFreeTibet">Free Tibet</button>
-        <button type="button" id="demoHuzur">Huzur</button>
       </div>
     </section>
     <section class="glass-section" aria-labelledby="upload-heading">
@@ -354,7 +353,6 @@ ui.innerHTML = `
 `;
 
 const demoFreeTibet = document.getElementById('demoFreeTibet') as HTMLButtonElement;
-const demoHuzur = document.getElementById('demoHuzur') as HTMLButtonElement;
 const localFile = document.getElementById('localFile') as HTMLInputElement;
 const compactFile = document.getElementById('compactFile') as HTMLInputElement;
 const stopBtn = document.getElementById('stopBtn') as HTMLButtonElement;
@@ -377,7 +375,6 @@ const keepHint = document.getElementById('keepHint') as HTMLSpanElement;
 
 if (
   !demoFreeTibet ||
-  !demoHuzur ||
   !localFile ||
   !compactFile ||
   !stopBtn ||
@@ -630,10 +627,6 @@ function onLocalFileChange(input: HTMLInputElement) {
 
 demoFreeTibet.addEventListener('click', () => {
   void playDemo('/freetibet.mp3', 'Free Tibet');
-});
-
-demoHuzur.addEventListener('click', () => {
-  void playDemo('/huzur.mp3', 'Huzur');
 });
 
 compactPlayBtn.addEventListener('click', () => {
