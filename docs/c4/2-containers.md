@@ -32,8 +32,7 @@ Dashed edges: webcam is only used in Live and Acid modes.
   fan-out. Duration cap is 30s. Glass HUD is not composited into the clip. Silent clip =
   failed Keep. The clip is paired with a look JSON download from `look-document`.
 - Talk is **not** a container on this wrap (deferred; no LLM host).
-- Second demo button requests `/huzur.mp3`, which is **not** in `public/` (`UNVERIFIED` as a
-  shipped asset — only `freetibet.mp3` is).
+- One bundled demo track (`freetibet.mp3`); the unshipped second demo button was removed.
 - `VoidLayer` / `voidFog` exist on disk but are **not** a container (not wired into `Scene`).
 
 **C3 zooms:** [`audio-engine`](./3-components/audio-engine.md), [`interpretation`](./3-components/interpretation.md), [`vj-scene`](./3-components/vj-scene.md).

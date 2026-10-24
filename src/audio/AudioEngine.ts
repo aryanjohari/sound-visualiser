@@ -99,7 +99,7 @@ export class AudioEngine {
 
     this.mode = 'mic';
 
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     this.audioContext = new AudioCtx();
 
     await this.audioContext.resume();
@@ -128,7 +128,7 @@ export class AudioEngine {
     this.mode = 'file';
     this.objectUrlToRevoke = revokeObjectUrlOnStop ? url : null;
 
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     this.audioContext = new AudioCtx();
     await this.audioContext.resume();
 
@@ -222,7 +222,7 @@ export class AudioEngine {
       // NOTE: `spectralFlux` extractor is currently crashing in the Meyda web build,
       // so we compute it ourselves from frame-to-frame powerSpectrum deltas.
       featureExtractors: ['rms', 'powerSpectrum'],
-      callback: (features: any) => {
+      callback: (features: { rms?: number; powerSpectrum?: Float32Array } | null) => {
         const rms = (features?.rms ?? 0) as number;
         const powerSpectrum = features?.powerSpectrum as Float32Array | undefined;
 

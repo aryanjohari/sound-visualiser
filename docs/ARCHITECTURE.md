@@ -272,10 +272,8 @@ For exhaustive per-uniform tables, the mood parameter matrix, and tuning constan
   Low-end GPUs will struggle even with the pixel-ratio cap of 2.
 - **`VoidLayer` and its `voidFog` shaders are dead code** — complete and functional, but
   never added to the scene graph. Kept as a starting point for a future volumetric mode.
-- **The second demo button is not wired to a shipped asset.** `main.ts` requests
-  `/huzur.mp3`, which is not in `public/`; the button surfaces a load error unless you add
-  that file yourself. Only `freetibet.mp3` ships with the repo.
-- **`node_modules/` and `dist/` are currently committed** to the repository.
+- **Only one demo track ships.** The second demo button (`/huzur.mp3`, never in `public/`)
+  was removed; `freetibet.mp3` is the only bundled asset.
 
 ## How to verify locally
 
