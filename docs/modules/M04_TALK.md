@@ -2,7 +2,7 @@
 
 **Status:** research card (optional organ)  
 **Date:** 2026-09-19  
-**Branch:** `look-instrument/v1`  
+**Branch:** `look-instrument/v1` (merged to `main`)  
 **Depends on:** [`VISION.md`](../VISION.md), [`00_FIELD_RESEARCH.md`](../00_FIELD_RESEARCH.md), [`01_ENGINE.md`](../01_ENGINE.md), [`02_CONSTITUTION.md`](../02_CONSTITUTION.md), [`M00_LOOK_DOCUMENT.md`](M00_LOOK_DOCUMENT.md), [`M02_CAPTURE.md`](M02_CAPTURE.md)  
 **Purpose:** One-shot language → validated look **patch**, same writer as M01. Admissible **only after** M00 JSON and M02 capture do not lie. Not a shader author, not an agent.
 

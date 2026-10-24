@@ -2,7 +2,7 @@
 
 **Status:** research card  
 **Date:** 2026-09-19  
-**Branch:** `look-instrument/v1`  
+**Branch:** `look-instrument/v1` (merged to `main`)  
 **Depends on:** [`VISION.md`](../VISION.md), [`00_FIELD_RESEARCH.md`](../00_FIELD_RESEARCH.md), [`01_ENGINE.md`](../01_ENGINE.md), [`02_CONSTITUTION.md`](../02_CONSTITUTION.md), [`M00_LOOK_DOCUMENT.md`](M00_LOOK_DOCUMENT.md)  
 **Purpose:** Lock BeatSync and MoodAnalyzer as testable law so a later change cannot silently reintroduce threshold-pop. Do not rewrite the tracker.
 

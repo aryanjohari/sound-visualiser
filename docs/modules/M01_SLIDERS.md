@@ -2,7 +2,7 @@
 
 **Status:** research card  
 **Date:** 2026-09-19  
-**Branch:** `look-instrument/v1`  
+**Branch:** `look-instrument/v1` (merged to `main`)  
 **Depends on:** [`VISION.md`](../VISION.md), [`00_FIELD_RESEARCH.md`](../00_FIELD_RESEARCH.md), [`01_ENGINE.md`](../01_ENGINE.md), [`02_CONSTITUTION.md`](../02_CONSTITUTION.md), [`M00_LOOK_DOCUMENT.md`](M00_LOOK_DOCUMENT.md)  
 **Purpose:** Semantic knobs write the **same** look document M00 applies. Unify today’s two writers. HUD stays a DOM view.
 

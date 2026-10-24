@@ -1,6 +1,6 @@
 # Look-instrument modules (M00–M04)
 
-Research cards for the `look-instrument/v1` product pass. Wrap named organs from [`01_ENGINE.md`](../01_ENGINE.md). Do not invent looks, shaders, or a second renderer. Law: [`02_CONSTITUTION.md`](../02_CONSTITUTION.md).
+Research cards for the `look-instrument/v1` product pass (merged to `main`). Wrap named organs from [`01_ENGINE.md`](../01_ENGINE.md). Do not invent looks, shaders, or a second renderer. Law: [`02_CONSTITUTION.md`](../02_CONSTITUTION.md).
 
 | Module | Organ | Tier A |
 |--------|-------|--------|

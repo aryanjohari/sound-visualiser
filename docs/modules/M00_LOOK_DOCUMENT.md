@@ -2,7 +2,7 @@
 
 **Status:** research card  
 **Date:** 2026-09-19  
-**Branch:** `look-instrument/v1`  
+**Branch:** `look-instrument/v1` (merged to `main`)  
 **Depends on:** [`VISION.md`](../VISION.md), [`00_FIELD_RESEARCH.md`](../00_FIELD_RESEARCH.md), [`01_ENGINE.md`](../01_ENGINE.md), [`02_CONSTITUTION.md`](../02_CONSTITUTION.md)  
 **Purpose:** Make the look a keepable document. One fail-closed schema, one apply writer. Wrap `src/`. No fourth look, no FFT in JSON, no new GLSL.
 

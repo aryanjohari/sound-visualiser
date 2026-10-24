@@ -2,7 +2,7 @@
 
 **Status:** governing doctrine (look-instrument pass)  
 **Date:** 2026-09-19  
-**Branch:** `look-instrument/v1`  
+**Branch:** `look-instrument/v1` (merged to `main`)  
 **Live demo (untouched):** https://music.arkhives.nz on `main` — never force-rewrite.  
 **Depends on:** `VISION.md`, `00_FIELD_RESEARCH.md`, `01_ENGINE.md`  
 **Feeds:** module cards, implementation plans, code review criteria
