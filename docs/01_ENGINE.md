@@ -2,7 +2,7 @@
 
 **Status:** living machine design (look-instrument pass)  
 **Date:** 2026-09-19  
-**Branch:** `look-instrument/v1`  
+**Branch:** `look-instrument/v1` (merged to `main`)  
 **Live demo (untouched):** https://music.arkhives.nz on `main` — never force-rewrite.  
 **Depends on:** [`VISION.md`](VISION.md), [`00_FIELD_RESEARCH.md`](00_FIELD_RESEARCH.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`PROJECT.md`](PROJECT.md)  
 **Feeds:** `02_CONSTITUTION.md`, `docs/modules/*`

@@ -260,11 +260,10 @@ For exhaustive per-uniform tables, the mood parameter matrix, and tuning constan
   is the intended trade — self-calibration in exchange for losing dynamics between sections.
 - **The 3D layers update even when they are not drawn.** In Live and Acid mode that is
   wasted CPU, accepted in exchange for instant mode switching.
-- **No automated tests and no CI.** Verification today is a typecheck, a production build,
-  and listening to it. For a project whose correctness criterion is "does it feel right",
-  unit tests would cover the least interesting parts, but the DSP helpers
-  (`bandEnergy`, the tempo vote, the EMA correction) are pure functions and are the obvious
-  place to start if that changes.
+- **Tests cover only the pure logic.** CI runs typecheck, lint, 18 unit tests (look schema,
+  `BeatSync` tempo vote and confidence, mood weights) and a production build. For a project
+  whose correctness criterion is "does it feel right", the rest is still checked by listening
+  to it. The DSP helpers such as `bandEnergy` and the EMA correction remain untested.
 - **Single ~658 kB bundle (~180 kB gzipped)**, dominated by Three.js. No code splitting or
   lazy loading is configured.
 - **Heavy fragment shaders.** The fluid background runs several five-octave fBM evaluations

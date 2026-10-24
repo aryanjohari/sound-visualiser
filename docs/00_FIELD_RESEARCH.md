@@ -2,7 +2,7 @@
 
 **Status:** living research notes (look-instrument pass)  
 **Date:** 2026-09-16  
-**Branch:** `look-instrument/v1`  
+**Branch:** `look-instrument/v1` (merged to `main`)  
 **Live demo (untouched):** https://music.arkhives.nz on `main` — never force-rewrite.  
 **North star:** Play a track → live look follows interpretation (energy, mood, beat) → optional talk nudges the look → export a short local clip + serializable look JSON.  
 **Feeds:** `VISION.md`, `ARCHITECTURE.md`, future `01_ENGINE.md`, future `02_CONSTITUTION.md`

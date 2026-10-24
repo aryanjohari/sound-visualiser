@@ -1,5 +1,7 @@
 # Sound Visualiser
 
+> **Status: frozen.** Sound Visualiser was a learning project and v1 is finished; it is no longer developed. Its ideas (reloadable look document, beat-with-confidence) continue in a successor project, Phosphene (link to follow).
+
 A browser-only audio-reactive WebGL visualiser. Feed it a microphone, a local audio file,
 or the bundled demo track, optionally add your webcam, and it renders a full-screen
 reactive scene at display refresh rate.
@@ -80,18 +82,20 @@ bundled demo track.
 ## Tests and CI
 
 ```bash
-npx tsc --noEmit   # strict typecheck, no emit
+npm run typecheck  # strict typecheck, no emit
+npm run lint       # eslint
 npm test           # vitest: look JSON, blendSync, BeatSync vote/octave/confidence, mood sum
 npm run build      # production build
 ```
 
-`npm run dev` is unaffected. There is no CI pipeline yet. GPU screenshot farms and
+GitHub Actions runs all four on every push to `main` and on pull requests.
+`npm run dev` is unaffected. GPU screenshot farms and
 Playwright Keep E2E are out of lane; Chromium clip playback (picture and soundtrack)
 is a human Keep check, not this suite.
 
 ## Architecture
 
-- [`docs/VISION.md`](docs/VISION.md) — look-instrument pass (branch `look-instrument/v1`): lab | keep.
+- [`docs/VISION.md`](docs/VISION.md) — look-instrument pass (merged to `main`): lab | keep.
 - [`docs/modules/README.md`](docs/modules/README.md) — M00 look document, M01 sliders, M02
   Keep, M03 tests (M04 talk deferred).
 - [`docs/STATUS.md`](docs/STATUS.md) — Tier A shipped / remaining OPEN.

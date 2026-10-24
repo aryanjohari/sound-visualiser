@@ -80,9 +80,9 @@ WebGL, Three.js, GLSL shaders, audio visualization, real-time graphics, Web Audi
 
 ## Do not claim
 
-- Production deployment, commercial users, or enterprise clients — no hosting config, CI/CD, or analytics in repo
+- Production deployment, commercial users, or enterprise clients — no hosting config or analytics in repo (CI exists; it only runs checks)
 - Team or coursework collaboration — all commits are from a single author; no co-authors or org named
-- Automated test coverage — no project test suite found
+- Broad automated test coverage — a small vitest suite (18 tests) covers look schema, beat sync and mood only; no rendering or audio-pipeline tests
 - Both demo tracks working out of the box — `public/` contains `freetibet.mp3` only; `huzur.mp3` is referenced in UI but not present in `public/` [inferred from codebase]
 - Meyda built-in `spectralFlux` extractor — code uses manual flux calculation instead
 - `VoidLayer` as a shipped feature — module exists but is not initialized in `VJScene`

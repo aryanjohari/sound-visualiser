@@ -1,11 +1,11 @@
 # Sound Visualiser — border vision (draft)
 
-**Status:** v1 lives on `main` (demo: https://music.arkhives.nz). This pass is on `look-instrument/v1`.  
+**Status:** v1 lives on `main` (demo: https://music.arkhives.nz). This pass shipped on `main`.  
 Never force-rewrite `main`.
 
 A personal **lab + sometimes-used tool**: music in, a look that follows the song, a clip you can keep. Built for Aryan. Frequency: sometimes — ADA is the daily system; Prism is stills.
 
-v1 already ships the engine (mic / file / demo, Cinematic / Live / Acid, mood, beat-with-confidence). This branch is a **product pass**, not a new renderer.
+v1 already ships the engine (mic / file / demo, Cinematic / Live / Acid, mood, beat-with-confidence). This pass was a **product pass**, not a new renderer.
 
 **North star:** play a track → live look follows the interpretation (energy, mood, beat) → optional talk nudges the look → export a short local clip + a serializable look JSON.
 

@@ -17,7 +17,7 @@ stack:
   - Web Audio API
   - Meyda
   - GSAP
-status: active
+status: frozen
 diagram: docs/c4/2-containers.mmd
 c4: docs/c4/portfolio-map.json
 links:
